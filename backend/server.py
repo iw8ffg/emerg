@@ -593,6 +593,158 @@ async def get_dashboard_stats(current_user: dict = Depends(get_current_user)):
 async def health_check():
     return {"status": "OK", "service": "Emergency Management System"}
 
+# Report endpoints
+@app.post("/api/reports/generate")
+async def generate_report(report_request: ReportRequest, current_user: dict = Depends(get_current_user)):
+    """Generate and download reports in various formats"""
+    try:
+        # Prepare filters
+        filters = {
+            'start_date': report_request.start_date,
+            'end_date': report_request.end_date,
+            'event_type': report_request.event_type,
+            'severity': report_request.severity,
+            'priority': report_request.priority,
+            'operator': report_request.operator,
+            'status': report_request.status
+        }
+        
+        # Get data based on report type
+        if report_request.report_type == 'events':
+            # Get events data
+            query = {}
+            if report_request.event_type:
+                query['event_type'] = report_request.event_type
+            if report_request.severity:
+                query['severity'] = report_request.severity
+            if report_request.status:
+                query['status'] = report_request.status
+                
+            events_data = list(db.events.find(query, {"_id": 0}).sort("created_at", -1))
+            
+            # Filter by date
+            if report_request.start_date or report_request.end_date:
+                events_data = filter_data_by_date(events_data, report_request.start_date, report_request.end_date)
+            
+            # Generate report
+            if report_request.format == 'pdf':
+                buffer = generate_events_pdf(events_data, filters)
+                filename = f"report_eventi_{datetime.now().strftime('%Y%m%d_%H%M')}.pdf"
+                media_type = 'application/pdf'
+            elif report_request.format == 'excel':
+                buffer = generate_excel_report(events_data, 'events', filters)
+                filename = f"report_eventi_{datetime.now().strftime('%Y%m%d_%H%M')}.xlsx"
+                media_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            else:
+                raise HTTPException(status_code=400, detail="Formato non supportato")
+        
+        elif report_request.report_type == 'logs':
+            # Get logs data
+            query = {}
+            if report_request.priority:
+                query['priority'] = report_request.priority
+            if report_request.operator:
+                query['operator'] = report_request.operator
+                
+            logs_data = list(db.logs.find(query, {"_id": 0}).sort("timestamp", -1))
+            
+            # Filter by date
+            if report_request.start_date or report_request.end_date:
+                logs_data = filter_data_by_date(logs_data, report_request.start_date, report_request.end_date, 'timestamp')
+            
+            # Generate report
+            if report_request.format == 'pdf':
+                buffer = generate_logs_pdf(logs_data, filters)
+                filename = f"report_log_{datetime.now().strftime('%Y%m%d_%H%M')}.pdf"
+                media_type = 'application/pdf'
+            elif report_request.format == 'excel':
+                buffer = generate_excel_report(logs_data, 'logs', filters)
+                filename = f"report_log_{datetime.now().strftime('%Y%m%d_%H%M')}.xlsx"
+                media_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            else:
+                raise HTTPException(status_code=400, detail="Formato non supportato")
+        
+        elif report_request.report_type == 'statistics':
+            # Get statistics data
+            total_events = db.events.count_documents({})
+            open_events = db.events.count_documents({"status": "aperto"})
+            critical_events = db.events.count_documents({"severity": "critica"})
+            inventory_items = db.inventory.count_documents({})
+            trained_resources = db.resources.count_documents({})
+            total_logs = db.logs.count_documents({})
+            
+            stats_data = {
+                "total_events": total_events,
+                "open_events": open_events,
+                "critical_events": critical_events,
+                "inventory_items": inventory_items,
+                "trained_resources": trained_resources,
+                "total_logs": total_logs
+            }
+            
+            # Generate report
+            if report_request.format == 'pdf':
+                buffer = generate_statistics_pdf(stats_data)
+                filename = f"report_statistiche_{datetime.now().strftime('%Y%m%d_%H%M')}.pdf"
+                media_type = 'application/pdf'
+            elif report_request.format == 'excel':
+                buffer = generate_excel_report(stats_data, 'statistics', filters)
+                filename = f"report_statistiche_{datetime.now().strftime('%Y%m%d_%H%M')}.xlsx"
+                media_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            else:
+                raise HTTPException(status_code=400, detail="Formato non supportato")
+        
+        else:
+            raise HTTPException(status_code=400, detail="Tipo di report non supportato")
+        
+        # Return file as streaming response
+        return StreamingResponse(
+            io.BytesIO(buffer.read()),
+            media_type=media_type,
+            headers={"Content-Disposition": f"attachment; filename={filename}"}
+        )
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Errore durante la generazione del report: {str(e)}")
+
+@app.get("/api/reports/templates")
+async def get_report_templates(current_user: dict = Depends(get_current_user)):
+    """Get available report templates and options"""
+    templates = {
+        "events": {
+            "name": "Report Eventi di Emergenza",
+            "description": "Report dettagliato di tutti gli eventi di emergenza",
+            "filters": ["start_date", "end_date", "event_type", "severity", "status"],
+            "formats": ["pdf", "excel"]
+        },
+        "logs": {
+            "name": "Report Log Operativi", 
+            "description": "Report delle attività operative registrate",
+            "filters": ["start_date", "end_date", "priority", "operator"],
+            "formats": ["pdf", "excel"]
+        },
+        "statistics": {
+            "name": "Report Statistiche Generali",
+            "description": "Riepilogo statistico del sistema",
+            "filters": [],
+            "formats": ["pdf", "excel"]
+        }
+    }
+    
+    # Get available filter options
+    filter_options = {
+        "event_types": ["incendio", "alluvione", "terremoto", "incidente_stradale", "emergenza_medica", "blackout", "altro"],
+        "severities": ["bassa", "media", "alta", "critica"],
+        "priorities": ["bassa", "normale", "alta"],
+        "statuses": ["aperto", "in_corso", "risolto", "chiuso"],
+        "operators": list(set([log.get('operator') for log in db.logs.find({}, {"operator": 1, "_id": 0}) if log.get('operator')]))
+    }
+    
+    return {
+        "templates": templates,
+        "filter_options": filter_options
+    }
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8001)

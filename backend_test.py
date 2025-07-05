@@ -220,12 +220,13 @@ def main():
     print(f"Initial log count: {initial_log_count}")
     
     # Test creating operational logs with different priorities
+    # Test 1: Normal priority log without operator field (should be set automatically by backend)
     log_data_normal = {
         "action": "Controllo magazzino attrezzature",
         "details": "Verifica scorte attrezzature antincendio. Tutto in ordine, scorte sufficienti per 2 settimane",
         "priority": "normale",
-        "event_id": event_id if event_id else None,
-        "operator": tester.user_info.get('username')
+        "event_id": event_id if event_id else None
+        # No operator field - should be set automatically by backend
     }
     
     log_id_normal = tester.test_create_log(log_data_normal)
@@ -234,12 +235,13 @@ def main():
     else:
         print(f"✅ Normal priority log created with ID: {log_id_normal}")
     
+    # Test 2: High priority log without operator field
     log_data_high = {
         "action": "Aggiornamento emergenza incendio",
         "details": "Situazione sotto controllo, mezzi aerei in arrivo",
         "priority": "alta",
-        "event_id": event_id if event_id else None,
-        "operator": tester.user_info.get('username')
+        "event_id": event_id if event_id else None
+        # No operator field - should be set automatically by backend
     }
     
     log_id_high = tester.test_create_log(log_data_high)
@@ -248,12 +250,13 @@ def main():
     else:
         print(f"✅ High priority log created with ID: {log_id_high}")
     
+    # Test 3: Low priority log without operator field
     log_data_low = {
         "action": "Routine di controllo",
         "details": "Controllo routine sistemi comunicazione",
         "priority": "bassa",
-        "event_id": None,
-        "operator": tester.user_info.get('username')
+        "event_id": None
+        # No operator field - should be set automatically by backend
     }
     
     log_id_low = tester.test_create_log(log_data_low)

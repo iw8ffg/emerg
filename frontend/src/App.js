@@ -93,6 +93,21 @@ function App() {
     operator: ''
   });
 
+  // Report states
+  const [reportTemplates, setReportTemplates] = useState({});
+  const [reportForm, setReportForm] = useState({
+    report_type: 'events',
+    format: 'pdf',
+    start_date: '',
+    end_date: '',
+    event_type: '',
+    severity: '',
+    priority: '',
+    operator: '',
+    status: ''
+  });
+  const [isGeneratingReport, setIsGeneratingReport] = useState(false);
+
   // Check authentication on mount
   useEffect(() => {
     if (token) {

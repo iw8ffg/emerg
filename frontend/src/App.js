@@ -553,7 +553,7 @@ function App() {
         {/* Dashboard View */}
         {currentView === 'dashboard' && (
           <div className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-6">
               <div className="bg-white p-6 rounded-lg shadow">
                 <div className="flex items-center justify-between">
                   <div>
@@ -581,6 +581,16 @@ function App() {
                     <p className="text-2xl font-bold text-red-800">{dashboardStats.critical_events || 0}</p>
                   </div>
                   <AlertIcon className="h-8 w-8 text-red-800" />
+                </div>
+              </div>
+              
+              <div className="bg-white p-6 rounded-lg shadow">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600">Log Operativi</p>
+                    <p className="text-2xl font-bold text-blue-600">{dashboardStats.total_logs || 0}</p>
+                  </div>
+                  <LogIcon className="h-8 w-8 text-blue-600" />
                 </div>
               </div>
               

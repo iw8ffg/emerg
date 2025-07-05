@@ -252,15 +252,71 @@ function App() {
     }
   };
 
-  const getSeverityColor = (severity) => {
-    switch (severity) {
-      case 'critica': return 'bg-red-100 text-red-800';
-      case 'alta': return 'bg-orange-100 text-orange-800';
-      case 'media': return 'bg-yellow-100 text-yellow-800';
+  const createLog = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+    
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/logs`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          action: logForm.action,
+          details: logForm.details,
+          priority: logForm.priority,
+          event_id: logForm.event_id || null
+        })
+      });
+      
+      if (response.ok) {
+        setSuccess('Log operativo creato con successo!');
+        setLogForm({
+          action: '',
+          details: '',
+          priority: 'normale',
+          event_id: ''
+        });
+        loadDashboardData();
+        setCurrentView('logs');
+      } else {
+        const data = await response.json();
+        // Handle different error response formats
+        if (typeof data.detail === 'string') {
+          setError(data.detail);
+        } else if (Array.isArray(data.detail)) {
+          const errorMessages = data.detail.map(err => `${err.loc.join('.')}: ${err.msg}`).join(', ');
+          setError(`Errori di validazione: ${errorMessages}`);
+        } else {
+          setError('Errore durante la creazione del log');
+        }
+      }
+    } catch (error) {
+      setError('Errore di connessione al server');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getPriorityColor = (priority) => {
+    switch (priority) {
+      case 'alta': return 'bg-red-100 text-red-800';
+      case 'normale': return 'bg-yellow-100 text-yellow-800';
       case 'bassa': return 'bg-green-100 text-green-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
+
+  const filteredLogs = logs.filter(log => {
+    const matchesPriority = !logFilters.priority || log.priority === logFilters.priority;
+    const matchesOperator = !logFilters.operator || log.operator.toLowerCase().includes(logFilters.operator.toLowerCase());
+    const matchesDate = (!logFilters.startDate || new Date(log.timestamp) >= new Date(logFilters.startDate)) &&
+                       (!logFilters.endDate || new Date(log.timestamp) <= new Date(logFilters.endDate));
+    return matchesPriority && matchesOperator && matchesDate;
+  });
 
   const getStatusColor = (status) => {
     switch (status) {

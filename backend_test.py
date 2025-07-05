@@ -96,6 +96,194 @@ class EmergencySystemAPITester:
         if success:
             print(f"Dashboard stats: {json.dumps(response, indent=2)}")
         return success
+        
+    def test_get_report_templates(self):
+        """Test getting report templates"""
+        success, response = self.run_test(
+            "Get report templates",
+            "GET",
+            "reports/templates",
+            200
+        )
+        if success:
+            print(f"Available report templates: {len(response.get('templates', {}))} templates")
+            print(f"Available filter options: {list(response.get('filter_options', {}).keys())}")
+        return success
+        
+    def test_generate_pdf_event_report(self):
+        """Test generating PDF report for events"""
+        report_data = {
+            "report_type": "events",
+            "format": "pdf",
+            "start_date": "2025-01-01",
+            "end_date": datetime.now().strftime("%Y-%m-%d"),
+            "event_type": "incendio"
+        }
+        
+        # For this test, we need to check the content-type header
+        url = f"{self.base_url}/api/reports/generate"
+        headers = {'Content-Type': 'application/json'}
+        if self.token:
+            headers['Authorization'] = f'Bearer {self.token}'
+            
+        print(f"\n🔍 Testing PDF Event Report generation...")
+        self.tests_run += 1
+        
+        try:
+            response = requests.post(url, json=report_data, headers=headers)
+            success = response.status_code == 200
+            
+            if success:
+                self.tests_passed += 1
+                content_type = response.headers.get('content-type')
+                is_pdf = 'application/pdf' in content_type
+                print(f"✅ Passed - Status: {response.status_code}, Content-Type: {content_type}")
+                if is_pdf:
+                    print(f"✅ Successfully generated PDF report ({len(response.content)} bytes)")
+                else:
+                    print(f"❌ Response is not a PDF: {content_type}")
+                return success
+            else:
+                print(f"❌ Failed - Expected 200, got {response.status_code}")
+                try:
+                    error_data = response.json()
+                    print(f"Error details: {json.dumps(error_data, indent=2)}")
+                except:
+                    print(f"Response text: {response.text}")
+                return False
+        except Exception as e:
+            print(f"❌ Failed - Error: {str(e)}")
+            return False
+            
+    def test_generate_excel_event_report(self):
+        """Test generating Excel report for events"""
+        report_data = {
+            "report_type": "events",
+            "format": "excel",
+            "start_date": "2025-01-01",
+            "end_date": datetime.now().strftime("%Y-%m-%d")
+        }
+        
+        # For this test, we need to check the content-type header
+        url = f"{self.base_url}/api/reports/generate"
+        headers = {'Content-Type': 'application/json'}
+        if self.token:
+            headers['Authorization'] = f'Bearer {self.token}'
+            
+        print(f"\n🔍 Testing Excel Event Report generation...")
+        self.tests_run += 1
+        
+        try:
+            response = requests.post(url, json=report_data, headers=headers)
+            success = response.status_code == 200
+            
+            if success:
+                self.tests_passed += 1
+                content_type = response.headers.get('content-type')
+                is_excel = 'spreadsheetml' in content_type
+                print(f"✅ Passed - Status: {response.status_code}, Content-Type: {content_type}")
+                if is_excel:
+                    print(f"✅ Successfully generated Excel report ({len(response.content)} bytes)")
+                else:
+                    print(f"❌ Response is not an Excel file: {content_type}")
+                return success
+            else:
+                print(f"❌ Failed - Expected 200, got {response.status_code}")
+                try:
+                    error_data = response.json()
+                    print(f"Error details: {json.dumps(error_data, indent=2)}")
+                except:
+                    print(f"Response text: {response.text}")
+                return False
+        except Exception as e:
+            print(f"❌ Failed - Error: {str(e)}")
+            return False
+            
+    def test_generate_pdf_log_report(self):
+        """Test generating PDF report for operational logs"""
+        report_data = {
+            "report_type": "logs",
+            "format": "pdf",
+            "start_date": "2025-01-01",
+            "end_date": datetime.now().strftime("%Y-%m-%d"),
+            "priority": "normale",
+            "operator": "admin"
+        }
+        
+        url = f"{self.base_url}/api/reports/generate"
+        headers = {'Content-Type': 'application/json'}
+        if self.token:
+            headers['Authorization'] = f'Bearer {self.token}'
+            
+        print(f"\n🔍 Testing PDF Log Report generation...")
+        self.tests_run += 1
+        
+        try:
+            response = requests.post(url, json=report_data, headers=headers)
+            success = response.status_code == 200
+            
+            if success:
+                self.tests_passed += 1
+                content_type = response.headers.get('content-type')
+                is_pdf = 'application/pdf' in content_type
+                print(f"✅ Passed - Status: {response.status_code}, Content-Type: {content_type}")
+                if is_pdf:
+                    print(f"✅ Successfully generated PDF log report ({len(response.content)} bytes)")
+                else:
+                    print(f"❌ Response is not a PDF: {content_type}")
+                return success
+            else:
+                print(f"❌ Failed - Expected 200, got {response.status_code}")
+                try:
+                    error_data = response.json()
+                    print(f"Error details: {json.dumps(error_data, indent=2)}")
+                except:
+                    print(f"Response text: {response.text}")
+                return False
+        except Exception as e:
+            print(f"❌ Failed - Error: {str(e)}")
+            return False
+            
+    def test_generate_pdf_statistics_report(self):
+        """Test generating PDF report for statistics"""
+        report_data = {
+            "report_type": "statistics",
+            "format": "pdf"
+        }
+        
+        url = f"{self.base_url}/api/reports/generate"
+        headers = {'Content-Type': 'application/json'}
+        if self.token:
+            headers['Authorization'] = f'Bearer {self.token}'
+            
+        print(f"\n🔍 Testing PDF Statistics Report generation...")
+        self.tests_run += 1
+        
+        try:
+            response = requests.post(url, json=report_data, headers=headers)
+            success = response.status_code == 200
+            
+            if success:
+                self.tests_passed += 1
+                content_type = response.headers.get('content-type')
+                is_pdf = 'application/pdf' in content_type
+                print(f"✅ Passed - Status: {response.status_code}, Content-Type: {content_type}")
+                if is_pdf:
+                    print(f"✅ Successfully generated PDF statistics report ({len(response.content)} bytes)")
+                else:
+                    print(f"❌ Response is not a PDF: {content_type}")
+                return success
+            else:
+                print(f"❌ Failed - Expected 200, got {response.status_code}")
+                try:
+                    error_data = response.json()
+                    print(f"Error details: {json.dumps(error_data, indent=2)}")
+                except:
+                    print(f"Response text: {response.text}")
+                return False
+        except Exception as e:
+            print(f"❌ Failed - Error: {str(e)}")
+            return False
 
     def test_get_events(self):
         """Test getting events list"""

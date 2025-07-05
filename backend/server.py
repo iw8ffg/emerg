@@ -302,13 +302,15 @@ async def get_dashboard_stats(current_user: dict = Depends(get_current_user)):
     critical_events = db.events.count_documents({"severity": "critica"})
     inventory_items = db.inventory.count_documents({})
     trained_resources = db.resources.count_documents({})
+    total_logs = db.logs.count_documents({})
     
     return {
         "total_events": total_events,
         "open_events": open_events,
         "critical_events": critical_events,
         "inventory_items": inventory_items,
-        "trained_resources": trained_resources
+        "trained_resources": trained_resources,
+        "total_logs": total_logs
     }
 
 @app.get("/api/health")

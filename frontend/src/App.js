@@ -189,7 +189,8 @@ function App() {
           address: eventForm.address || null,
           notes: eventForm.notes || null,
           resources_needed: eventForm.resources_needed || [],
-          status: "aperto"
+          status: "aperto",
+          created_by: user.username
         })
       });
       

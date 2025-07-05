@@ -404,15 +404,33 @@ def filter_data_by_date(data, start_date, end_date, date_field='created_at'):
             continue
             
         try:
-            item_date = datetime.fromisoformat(item_date_str.replace('Z', '+00:00'))
+            # Handle different datetime formats
+            if isinstance(item_date_str, str):
+                # Remove timezone info if present and parse
+                clean_date_str = item_date_str.replace('Z', '').replace('+00:00', '')
+                if 'T' in clean_date_str:
+                    item_date = datetime.fromisoformat(clean_date_str)
+                else:
+                    item_date = datetime.strptime(clean_date_str, '%Y-%m-%d %H:%M:%S')
+            elif isinstance(item_date_str, datetime):
+                item_date = item_date_str
+            else:
+                continue
             
-            if start_date and item_date < datetime.fromisoformat(start_date + 'T00:00:00'):
-                continue
-            if end_date and item_date > datetime.fromisoformat(end_date + 'T23:59:59'):
-                continue
-                
+            if start_date:
+                start_datetime = datetime.fromisoformat(start_date + 'T00:00:00')
+                if item_date < start_datetime:
+                    continue
+                    
+            if end_date:
+                end_datetime = datetime.fromisoformat(end_date + 'T23:59:59')
+                if item_date > end_datetime:
+                    continue
+                    
             filtered_data.append(item)
-        except (ValueError, TypeError):
+        except (ValueError, TypeError) as e:
+            # Skip items with invalid dates
+            print(f"Skipping item with invalid date: {item_date_str}, error: {e}")
             continue
     
     return filtered_data

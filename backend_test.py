@@ -462,6 +462,24 @@ def main():
     
     # Test getting dashboard stats again to verify log count updated
     tester.test_get_dashboard_stats()
+    
+    # Test report functionality
+    print("\n--- Testing Report Functionality ---")
+    
+    # Test getting report templates
+    tester.test_get_report_templates()
+    
+    # Test generating PDF event report
+    tester.test_generate_pdf_event_report()
+    
+    # Test generating Excel event report
+    tester.test_generate_excel_event_report()
+    
+    # Test generating PDF log report
+    tester.test_generate_pdf_log_report()
+    
+    # Test generating PDF statistics report
+    tester.test_generate_pdf_statistics_report()
 
     # Print results
     print(f"\n📊 Tests passed: {tester.tests_passed}/{tester.tests_run}")

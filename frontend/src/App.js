@@ -203,7 +203,15 @@ function App() {
         setCurrentView('events');
       } else {
         const data = await response.json();
-        setError(data.detail || 'Errore durante la creazione dell\'evento');
+        // Handle different error response formats
+        if (typeof data.detail === 'string') {
+          setError(data.detail);
+        } else if (Array.isArray(data.detail)) {
+          const errorMessages = data.detail.map(err => `${err.loc.join('.')}: ${err.msg}`).join(', ');
+          setError(`Errori di validazione: ${errorMessages}`);
+        } else {
+          setError('Errore durante la creazione dell\'evento');
+        }
       }
     } catch (error) {
       setError('Errore di connessione al server');

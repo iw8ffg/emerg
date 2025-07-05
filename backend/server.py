@@ -86,7 +86,7 @@ class InventoryItem(BaseModel):
 class OperationalLog(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     timestamp: datetime = Field(default_factory=datetime.now)
-    operator: str
+    operator: Optional[str] = None
     action: str
     details: str
     event_id: Optional[str] = None

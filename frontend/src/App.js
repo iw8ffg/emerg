@@ -884,6 +884,184 @@ function App() {
             </div>
           </div>
         )}
+
+        {/* Operational Logs View */}
+        {currentView === 'logs' && canAccess(['admin', 'coordinator', 'operator']) && (
+          <div className="bg-white rounded-lg shadow">
+            <div className="px-6 py-4 border-b border-gray-200">
+              <div className="flex justify-between items-center">
+                <h3 className="text-lg font-medium text-gray-900">Diario Operativo</h3>
+                <div className="flex items-center space-x-4">
+                  <select
+                    value={logFilters.priority}
+                    onChange={(e) => setLogFilters({ ...logFilters, priority: e.target.value })}
+                    className="px-3 py-1 border border-gray-300 rounded-md text-sm"
+                  >
+                    <option value="">Tutte le priorità</option>
+                    <option value="alta">Alta</option>
+                    <option value="normale">Normale</option>
+                    <option value="bassa">Bassa</option>
+                  </select>
+                  <input
+                    type="text"
+                    placeholder="Filtra per operatore"
+                    value={logFilters.operator}
+                    onChange={(e) => setLogFilters({ ...logFilters, operator: e.target.value })}
+                    className="px-3 py-1 border border-gray-300 rounded-md text-sm"
+                  />
+                  <button
+                    onClick={() => setCurrentView('create-log')}
+                    className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700"
+                  >
+                    <PlusIcon />
+                    <span>Nuovo Log</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div className="px-6 py-4">
+              {filteredLogs.length === 0 ? (
+                <p className="text-gray-500">
+                  {logs.length === 0 ? 'Nessun log operativo presente' : 'Nessun log corrispondente ai filtri'}
+                </p>
+              ) : (
+                <div className="space-y-4">
+                  {filteredLogs.map((log) => (
+                    <div key={log.id} className="border border-gray-200 rounded-lg p-4">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center space-x-3">
+                          <LogIcon className="h-5 w-5 text-gray-400" />
+                          <h4 className="font-medium text-gray-900">{log.action}</h4>
+                          <span className={`px-2 py-1 text-xs rounded-full ${getPriorityColor(log.priority)}`}>
+                            {log.priority}
+                          </span>
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          {new Date(log.timestamp).toLocaleString()}
+                        </div>
+                      </div>
+                      
+                      <p className="text-gray-600 mb-3">{log.details}</p>
+                      
+                      <div className="flex items-center justify-between text-sm">
+                        <div className="flex items-center space-x-4">
+                          <span className="text-gray-500">
+                            <strong>Operatore:</strong> {log.operator}
+                          </span>
+                          {log.event_id && (
+                            <span className="text-blue-600">
+                              <strong>Evento collegato:</strong> {log.event_id}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Create Log View */}
+        {currentView === 'create-log' && canAccess(['admin', 'coordinator', 'operator']) && (
+          <div className="bg-white rounded-lg shadow">
+            <div className="px-6 py-4 border-b border-gray-200">
+              <h3 className="text-lg font-medium text-gray-900">Nuovo Log Operativo</h3>
+            </div>
+            <div className="px-6 py-4">
+              <form onSubmit={createLog} className="space-y-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Azione/Attività *
+                  </label>
+                  <input
+                    type="text"
+                    value={logForm.action}
+                    onChange={(e) => setLogForm({ ...logForm, action: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="es. Controllo magazzino, Riunione coordinamento, Aggiornamento status..."
+                    required
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Dettagli *
+                  </label>
+                  <textarea
+                    value={logForm.details}
+                    onChange={(e) => setLogForm({ ...logForm, details: e.target.value })}
+                    rows={4}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Descrizione dettagliata dell'attività svolta, risultati, note operative..."
+                    required
+                  />
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Priorità
+                    </label>
+                    <select
+                      value={logForm.priority}
+                      onChange={(e) => setLogForm({ ...logForm, priority: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="bassa">Bassa</option>
+                      <option value="normale">Normale</option>
+                      <option value="alta">Alta</option>
+                    </select>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Evento Collegato (opzionale)
+                    </label>
+                    <select
+                      value={logForm.event_id}
+                      onChange={(e) => setLogForm({ ...logForm, event_id: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="">Nessun evento</option>
+                      {events.filter(event => event.status === 'aperto' || event.status === 'in_corso').map((event) => (
+                        <option key={event.id} value={event.id}>
+                          {event.title} ({event.event_type})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+                
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <h4 className="font-medium text-gray-900 mb-2">Informazioni Automatiche</h4>
+                  <div className="text-sm text-gray-600 space-y-1">
+                    <p><strong>Operatore:</strong> {user.full_name} ({user.username})</p>
+                    <p><strong>Timestamp:</strong> {new Date().toLocaleString()}</p>
+                  </div>
+                </div>
+                
+                <div className="flex justify-end space-x-3">
+                  <button
+                    type="button"
+                    onClick={() => setCurrentView('logs')}
+                    className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+                  >
+                    Annulla
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400"
+                  >
+                    {loading ? 'Creazione...' : 'Crea Log'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
       </main>
     </div>
   );

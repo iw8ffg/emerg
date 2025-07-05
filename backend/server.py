@@ -365,6 +365,10 @@ def generate_excel_report(data, report_type, filters):
                     df['updated_at'] = pd.to_datetime(df['updated_at'], errors='coerce').dt.strftime('%d/%m/%Y %H:%M')
                 
                 df.to_excel(writer, sheet_name='Eventi Emergenza', index=False)
+            else:
+                # Create empty DataFrame with headers if no data
+                empty_df = pd.DataFrame(columns=['title', 'event_type', 'severity', 'status', 'created_at', 'created_by'])
+                empty_df.to_excel(writer, sheet_name='Eventi Emergenza', index=False)
             
         elif report_type == 'logs':
             # Convert logs data to DataFrame
@@ -374,6 +378,10 @@ def generate_excel_report(data, report_type, filters):
                     df['timestamp'] = pd.to_datetime(df['timestamp']).dt.strftime('%d/%m/%Y %H:%M')
                 
                 df.to_excel(writer, sheet_name='Log Operativi', index=False)
+            else:
+                # Create empty DataFrame with headers if no data
+                empty_df = pd.DataFrame(columns=['action', 'priority', 'operator', 'timestamp', 'details'])
+                empty_df.to_excel(writer, sheet_name='Log Operativi', index=False)
         
         elif report_type == 'statistics':
             # Create statistics sheet

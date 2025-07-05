@@ -279,11 +279,29 @@ def generate_logs_pdf(logs_data, filters):
         table_data = [['Azione', 'Priorità', 'Operatore', 'Data', 'Dettagli']]
         
         for log in logs_data:
+            # Handle datetime conversion safely
+            timestamp = log.get('timestamp', '')
+            if isinstance(timestamp, str) and timestamp:
+                try:
+                    # Remove timezone info and parse
+                    clean_date = timestamp.replace('Z', '').replace('+00:00', '')
+                    if 'T' in clean_date:
+                        date_obj = datetime.fromisoformat(clean_date)
+                    else:
+                        date_obj = datetime.strptime(clean_date, '%Y-%m-%d %H:%M:%S')
+                    formatted_date = date_obj.strftime('%d/%m/%Y %H:%M')
+                except (ValueError, TypeError):
+                    formatted_date = 'N/A'
+            elif isinstance(timestamp, datetime):
+                formatted_date = timestamp.strftime('%d/%m/%Y %H:%M')
+            else:
+                formatted_date = 'N/A'
+            
             table_data.append([
                 log.get('action', '')[:25],
                 log.get('priority', ''),
                 log.get('operator', ''),
-                datetime.fromisoformat(log.get('timestamp', '')).strftime('%d/%m/%Y %H:%M') if log.get('timestamp') else '',
+                formatted_date,
                 log.get('details', '')[:40] + '...' if len(log.get('details', '')) > 40 else log.get('details', '')
             ])
         

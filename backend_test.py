@@ -10,6 +10,8 @@ class EmergencySystemAPITester:
         self.tests_run = 0
         self.tests_passed = 0
         self.user_info = None
+        self.created_logs = []
+        self.created_events = []
 
     def run_test(self, name, method, endpoint, expected_status, data=None, headers=None):
         """Run a single API test"""
@@ -107,7 +109,8 @@ class EmergencySystemAPITester:
             print(f"Retrieved {len(response)} events")
             if len(response) > 0:
                 print(f"First event: {json.dumps(response[0], indent=2)}")
-        return success
+            return response
+        return []
 
     def test_create_event(self, event_data):
         """Test creating a new event"""
@@ -120,7 +123,10 @@ class EmergencySystemAPITester:
         )
         if success:
             print(f"Event created: {json.dumps(response, indent=2)}")
-            return response.get('event_id')
+            event_id = response.get('event_id')
+            if event_id:
+                self.created_events.append(event_id)
+            return event_id
         return None
 
     def test_health_check(self):
@@ -132,6 +138,38 @@ class EmergencySystemAPITester:
             200
         )
         return success
+        
+    def test_get_logs(self):
+        """Test getting operational logs"""
+        success, response = self.run_test(
+            "Get operational logs",
+            "GET",
+            "logs",
+            200
+        )
+        if success:
+            print(f"Retrieved {len(response)} operational logs")
+            if len(response) > 0:
+                print(f"First log: {json.dumps(response[0], indent=2)}")
+            return response
+        return []
+        
+    def test_create_log(self, log_data):
+        """Test creating a new operational log"""
+        success, response = self.run_test(
+            "Create new operational log",
+            "POST",
+            "logs",
+            200,
+            data=log_data
+        )
+        if success:
+            print(f"Log created: {json.dumps(response, indent=2)}")
+            log_id = response.get('log_id')
+            if log_id:
+                self.created_logs.append(log_id)
+            return log_id
+        return None
 
 def main():
     # Setup

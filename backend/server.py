@@ -154,6 +154,261 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(securit
     except jwt.PyJWTError:
         raise HTTPException(status_code=401, detail="Token non valido")
 
+# Report generation functions
+def generate_events_pdf(events_data, filters):
+    """Generate PDF report for emergency events"""
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=A4)
+    
+    # Get styles
+    styles = getSampleStyleSheet()
+    title_style = ParagraphStyle(
+        'CustomTitle',
+        parent=styles['Heading1'],
+        fontSize=18,
+        spaceAfter=30,
+        alignment=TA_CENTER
+    )
+    
+    # Build content
+    content = []
+    
+    # Title
+    title = Paragraph("REPORT EVENTI DI EMERGENZA", title_style)
+    content.append(title)
+    content.append(Spacer(1, 12))
+    
+    # Report info
+    report_info = f"""
+    <b>Data generazione:</b> {datetime.now().strftime('%d/%m/%Y %H:%M')}<br/>
+    <b>Periodo:</b> {filters.get('start_date', 'Non specificato')} - {filters.get('end_date', 'Non specificato')}<br/>
+    <b>Filtri applicati:</b> Tipo: {filters.get('event_type', 'Tutti')}, Gravità: {filters.get('severity', 'Tutte')}<br/>
+    <b>Totale eventi:</b> {len(events_data)}
+    """
+    content.append(Paragraph(report_info, styles['Normal']))
+    content.append(Spacer(1, 20))
+    
+    if events_data:
+        # Create table data
+        table_data = [['Titolo', 'Tipo', 'Gravità', 'Status', 'Data', 'Operatore']]
+        
+        for event in events_data:
+            table_data.append([
+                event.get('title', '')[:30],
+                event.get('event_type', ''),
+                event.get('severity', ''),
+                event.get('status', ''),
+                datetime.fromisoformat(event.get('created_at', '')).strftime('%d/%m/%Y') if event.get('created_at') else '',
+                event.get('created_by', '')
+            ])
+        
+        # Create table
+        table = Table(table_data, colWidths=[2*inch, 1*inch, 1*inch, 1*inch, 1*inch, 1*inch])
+        table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, 0), 10),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+            ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+            ('FONTSIZE', (0, 1), (-1, -1), 8),
+            ('GRID', (0, 0), (-1, -1), 1, colors.black)
+        ]))
+        
+        content.append(table)
+    else:
+        content.append(Paragraph("Nessun evento trovato per i filtri specificati.", styles['Normal']))
+    
+    # Build PDF
+    doc.build(content)
+    buffer.seek(0)
+    return buffer
+
+def generate_logs_pdf(logs_data, filters):
+    """Generate PDF report for operational logs"""
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=A4)
+    
+    styles = getSampleStyleSheet()
+    title_style = ParagraphStyle(
+        'CustomTitle',
+        parent=styles['Heading1'],
+        fontSize=18,
+        spaceAfter=30,
+        alignment=TA_CENTER
+    )
+    
+    content = []
+    
+    # Title
+    title = Paragraph("REPORT LOG OPERATIVI", title_style)
+    content.append(title)
+    content.append(Spacer(1, 12))
+    
+    # Report info
+    report_info = f"""
+    <b>Data generazione:</b> {datetime.now().strftime('%d/%m/%Y %H:%M')}<br/>
+    <b>Periodo:</b> {filters.get('start_date', 'Non specificato')} - {filters.get('end_date', 'Non specificato')}<br/>
+    <b>Filtri applicati:</b> Priorità: {filters.get('priority', 'Tutte')}, Operatore: {filters.get('operator', 'Tutti')}<br/>
+    <b>Totale log:</b> {len(logs_data)}
+    """
+    content.append(Paragraph(report_info, styles['Normal']))
+    content.append(Spacer(1, 20))
+    
+    if logs_data:
+        # Create table data
+        table_data = [['Azione', 'Priorità', 'Operatore', 'Data', 'Dettagli']]
+        
+        for log in logs_data:
+            table_data.append([
+                log.get('action', '')[:25],
+                log.get('priority', ''),
+                log.get('operator', ''),
+                datetime.fromisoformat(log.get('timestamp', '')).strftime('%d/%m/%Y %H:%M') if log.get('timestamp') else '',
+                log.get('details', '')[:40] + '...' if len(log.get('details', '')) > 40 else log.get('details', '')
+            ])
+        
+        table = Table(table_data, colWidths=[1.5*inch, 0.8*inch, 1*inch, 1.2*inch, 2.5*inch])
+        table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, 0), 9),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+            ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+            ('FONTSIZE', (0, 1), (-1, -1), 7),
+            ('GRID', (0, 0), (-1, -1), 1, colors.black)
+        ]))
+        
+        content.append(table)
+    else:
+        content.append(Paragraph("Nessun log trovato per i filtri specificati.", styles['Normal']))
+    
+    doc.build(content)
+    buffer.seek(0)
+    return buffer
+
+def generate_statistics_pdf(stats_data):
+    """Generate PDF report for statistics"""
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=A4)
+    
+    styles = getSampleStyleSheet()
+    title_style = ParagraphStyle(
+        'CustomTitle',
+        parent=styles['Heading1'],
+        fontSize=18,
+        spaceAfter=30,
+        alignment=TA_CENTER
+    )
+    
+    content = []
+    
+    # Title
+    title = Paragraph("REPORT STATISTICHE GENERALI", title_style)
+    content.append(title)
+    content.append(Spacer(1, 12))
+    
+    # Report info
+    report_info = f"""
+    <b>Data generazione:</b> {datetime.now().strftime('%d/%m/%Y %H:%M')}<br/>
+    <b>Sistema:</b> Gestione Emergenze<br/>
+    """
+    content.append(Paragraph(report_info, styles['Normal']))
+    content.append(Spacer(1, 20))
+    
+    # Statistics table
+    stats_table_data = [
+        ['Categoria', 'Valore'],
+        ['Eventi Totali', str(stats_data.get('total_events', 0))],
+        ['Eventi Aperti', str(stats_data.get('open_events', 0))],
+        ['Eventi Critici', str(stats_data.get('critical_events', 0))],
+        ['Log Operativi', str(stats_data.get('total_logs', 0))],
+        ['Articoli Inventario', str(stats_data.get('inventory_items', 0))],
+        ['Risorse Formate', str(stats_data.get('trained_resources', 0))]
+    ]
+    
+    stats_table = Table(stats_table_data, colWidths=[3*inch, 2*inch])
+    stats_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, 0), 12),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+        ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+        ('FONTSIZE', (0, 1), (-1, -1), 11),
+        ('GRID', (0, 0), (-1, -1), 1, colors.black)
+    ]))
+    
+    content.append(stats_table)
+    
+    doc.build(content)
+    buffer.seek(0)
+    return buffer
+
+def generate_excel_report(data, report_type, filters):
+    """Generate Excel report"""
+    buffer = io.BytesIO()
+    
+    with pd.ExcelWriter(buffer, engine='openpyxl') as writer:
+        if report_type == 'events':
+            # Convert events data to DataFrame
+            if data:
+                df = pd.DataFrame(data)
+                # Convert datetime columns
+                if 'created_at' in df.columns:
+                    df['created_at'] = pd.to_datetime(df['created_at']).dt.strftime('%d/%m/%Y %H:%M')
+                if 'updated_at' in df.columns:
+                    df['updated_at'] = pd.to_datetime(df['updated_at'], errors='coerce').dt.strftime('%d/%m/%Y %H:%M')
+                
+                df.to_excel(writer, sheet_name='Eventi Emergenza', index=False)
+            
+        elif report_type == 'logs':
+            # Convert logs data to DataFrame
+            if data:
+                df = pd.DataFrame(data)
+                if 'timestamp' in df.columns:
+                    df['timestamp'] = pd.to_datetime(df['timestamp']).dt.strftime('%d/%m/%Y %H:%M')
+                
+                df.to_excel(writer, sheet_name='Log Operativi', index=False)
+        
+        elif report_type == 'statistics':
+            # Create statistics sheet
+            stats_df = pd.DataFrame.from_dict(data, orient='index', columns=['Valore'])
+            stats_df.index.name = 'Categoria'
+            stats_df.to_excel(writer, sheet_name='Statistiche')
+    
+    buffer.seek(0)
+    return buffer
+
+def filter_data_by_date(data, start_date, end_date, date_field='created_at'):
+    """Filter data by date range"""
+    if not start_date and not end_date:
+        return data
+    
+    filtered_data = []
+    for item in data:
+        item_date_str = item.get(date_field)
+        if not item_date_str:
+            continue
+            
+        try:
+            item_date = datetime.fromisoformat(item_date_str.replace('Z', '+00:00'))
+            
+            if start_date and item_date < datetime.fromisoformat(start_date + 'T00:00:00'):
+                continue
+            if end_date and item_date > datetime.fromisoformat(end_date + 'T23:59:59'):
+                continue
+                
+            filtered_data.append(item)
+        except (ValueError, TypeError):
+            continue
+    
+    return filtered_data
+
 # Initialize admin user
 @app.on_event("startup")
 async def startup_event():

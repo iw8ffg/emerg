@@ -160,11 +160,14 @@ function App() {
     if (!token) return;
     
     try {
-      const [statsRes, eventsRes] = await Promise.all([
+      const [statsRes, eventsRes, logsRes] = await Promise.all([
         fetch(`${API_BASE_URL}/api/dashboard/stats`, {
           headers: { Authorization: `Bearer ${token}` }
         }),
         fetch(`${API_BASE_URL}/api/events`, {
+          headers: { Authorization: `Bearer ${token}` }
+        }),
+        fetch(`${API_BASE_URL}/api/logs`, {
           headers: { Authorization: `Bearer ${token}` }
         })
       ]);
@@ -177,6 +180,11 @@ function App() {
       if (eventsRes.ok) {
         const eventsData = await eventsRes.json();
         setEvents(eventsData);
+      }
+
+      if (logsRes.ok) {
+        const logsData = await logsRes.json();
+        setLogs(logsData);
       }
     } catch (error) {
       console.error('Failed to load dashboard data:', error);

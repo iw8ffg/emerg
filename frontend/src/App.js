@@ -1228,6 +1228,249 @@ function App() {
             </div>
           </div>
         )}
+
+        {/* Reports View */}
+        {currentView === 'reports' && (
+          <div className="space-y-6">
+            {/* Report Generation Card */}
+            <div className="bg-white rounded-lg shadow">
+              <div className="px-6 py-4 border-b border-gray-200">
+                <div className="flex items-center space-x-3">
+                  <ReportIcon className="h-6 w-6 text-blue-600" />
+                  <h3 className="text-lg font-medium text-gray-900">Generazione Report</h3>
+                </div>
+              </div>
+              <div className="px-6 py-4">
+                <form onSubmit={generateReport} className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Tipo di Report *
+                      </label>
+                      <select
+                        value={reportForm.report_type}
+                        onChange={(e) => setReportForm({ ...reportForm, report_type: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        required
+                      >
+                        <option value="events">Report Eventi di Emergenza</option>
+                        <option value="logs">Report Log Operativi</option>
+                        <option value="statistics">Report Statistiche Generali</option>
+                      </select>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Formato *
+                      </label>
+                      <select
+                        value={reportForm.format}
+                        onChange={(e) => setReportForm({ ...reportForm, format: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        required
+                      >
+                        <option value="pdf">PDF (Stampa)</option>
+                        <option value="excel">Excel (Analisi)</option>
+                      </select>
+                    </div>
+                  </div>
+                  
+                  {reportForm.report_type !== 'statistics' && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Data Inizio
+                        </label>
+                        <input
+                          type="date"
+                          value={reportForm.start_date}
+                          onChange={(e) => setReportForm({ ...reportForm, start_date: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Data Fine
+                        </label>
+                        <input
+                          type="date"
+                          value={reportForm.end_date}
+                          onChange={(e) => setReportForm({ ...reportForm, end_date: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Filtri specifici per tipo di report */}
+                  {reportForm.report_type === 'events' && (
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Tipo Evento
+                        </label>
+                        <select
+                          value={reportForm.event_type}
+                          onChange={(e) => setReportForm({ ...reportForm, event_type: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                          <option value="">Tutti i tipi</option>
+                          <option value="incendio">Incendio</option>
+                          <option value="alluvione">Alluvione</option>
+                          <option value="terremoto">Terremoto</option>
+                          <option value="incidente_stradale">Incidente Stradale</option>
+                          <option value="emergenza_medica">Emergenza Medica</option>
+                          <option value="blackout">Blackout</option>
+                          <option value="altro">Altro</option>
+                        </select>
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Gravità
+                        </label>
+                        <select
+                          value={reportForm.severity}
+                          onChange={(e) => setReportForm({ ...reportForm, severity: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                          <option value="">Tutte le gravità</option>
+                          <option value="bassa">Bassa</option>
+                          <option value="media">Media</option>
+                          <option value="alta">Alta</option>
+                          <option value="critica">Critica</option>
+                        </select>
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Status
+                        </label>
+                        <select
+                          value={reportForm.status}
+                          onChange={(e) => setReportForm({ ...reportForm, status: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                          <option value="">Tutti gli status</option>
+                          <option value="aperto">Aperto</option>
+                          <option value="in_corso">In Corso</option>
+                          <option value="risolto">Risolto</option>
+                          <option value="chiuso">Chiuso</option>
+                        </select>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {reportForm.report_type === 'logs' && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Priorità
+                        </label>
+                        <select
+                          value={reportForm.priority}
+                          onChange={(e) => setReportForm({ ...reportForm, priority: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                          <option value="">Tutte le priorità</option>
+                          <option value="bassa">Bassa</option>
+                          <option value="normale">Normale</option>
+                          <option value="alta">Alta</option>
+                        </select>
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Operatore
+                        </label>
+                        <input
+                          type="text"
+                          value={reportForm.operator}
+                          onChange={(e) => setReportForm({ ...reportForm, operator: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="Nome operatore (opzionale)"
+                        />
+                      </div>
+                    </div>
+                  )}
+                  
+                  <div className="flex justify-end space-x-3">
+                    <button
+                      type="submit"
+                      disabled={isGeneratingReport}
+                      className="flex items-center space-x-2 px-6 py-3 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400"
+                    >
+                      {isGeneratingReport ? (
+                        <>
+                          <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div>
+                          <span>Generazione...</span>
+                        </>
+                      ) : (
+                        <>
+                          <DownloadIcon />
+                          <span>Genera e Scarica Report</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+            
+            {/* Report Templates Info */}
+            <div className="bg-white rounded-lg shadow">
+              <div className="px-6 py-4 border-b border-gray-200">
+                <h3 className="text-lg font-medium text-gray-900">Tipi di Report Disponibili</h3>
+              </div>
+              <div className="px-6 py-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="p-4 border border-gray-200 rounded-lg">
+                    <div className="flex items-center space-x-3 mb-3">
+                      <AlertIcon className="h-6 w-6 text-red-600" />
+                      <h4 className="font-medium text-gray-900">Eventi di Emergenza</h4>
+                    </div>
+                    <p className="text-sm text-gray-600 mb-3">
+                      Report dettagliato di tutti gli eventi di emergenza con filtri per tipo, gravità e periodo.
+                    </p>
+                    <div className="text-xs text-gray-500">
+                      <p><strong>Formati:</strong> PDF, Excel</p>
+                      <p><strong>Filtri:</strong> Data, Tipo, Gravità, Status</p>
+                    </div>
+                  </div>
+                  
+                  <div className="p-4 border border-gray-200 rounded-lg">
+                    <div className="flex items-center space-x-3 mb-3">
+                      <LogIcon className="h-6 w-6 text-blue-600" />
+                      <h4 className="font-medium text-gray-900">Log Operativi</h4>
+                    </div>
+                    <p className="text-sm text-gray-600 mb-3">
+                      Report delle attività operative registrate nel sistema con dettagli per operatore e priorità.
+                    </p>
+                    <div className="text-xs text-gray-500">
+                      <p><strong>Formati:</strong> PDF, Excel</p>
+                      <p><strong>Filtri:</strong> Data, Priorità, Operatore</p>
+                    </div>
+                  </div>
+                  
+                  <div className="p-4 border border-gray-200 rounded-lg">
+                    <div className="flex items-center space-x-3 mb-3">
+                      <ReportIcon className="h-6 w-6 text-green-600" />
+                      <h4 className="font-medium text-gray-900">Statistiche Generali</h4>
+                    </div>
+                    <p className="text-sm text-gray-600 mb-3">
+                      Riepilogo statistico completo del sistema con tutti i contatori e metriche principali.
+                    </p>
+                    <div className="text-xs text-gray-500">
+                      <p><strong>Formati:</strong> PDF, Excel</p>
+                      <p><strong>Contenuto:</strong> Dashboard statistiche</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </main>
     </div>
   );

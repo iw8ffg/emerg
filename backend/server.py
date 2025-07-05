@@ -193,12 +193,30 @@ def generate_events_pdf(events_data, filters):
         table_data = [['Titolo', 'Tipo', 'Gravità', 'Status', 'Data', 'Operatore']]
         
         for event in events_data:
+            # Handle datetime conversion safely
+            created_at = event.get('created_at', '')
+            if isinstance(created_at, str) and created_at:
+                try:
+                    # Remove timezone info and parse
+                    clean_date = created_at.replace('Z', '').replace('+00:00', '')
+                    if 'T' in clean_date:
+                        date_obj = datetime.fromisoformat(clean_date)
+                    else:
+                        date_obj = datetime.strptime(clean_date, '%Y-%m-%d %H:%M:%S')
+                    formatted_date = date_obj.strftime('%d/%m/%Y')
+                except (ValueError, TypeError):
+                    formatted_date = 'N/A'
+            elif isinstance(created_at, datetime):
+                formatted_date = created_at.strftime('%d/%m/%Y')
+            else:
+                formatted_date = 'N/A'
+            
             table_data.append([
                 event.get('title', '')[:30],
                 event.get('event_type', ''),
                 event.get('severity', ''),
                 event.get('status', ''),
-                datetime.fromisoformat(event.get('created_at', '')).strftime('%d/%m/%Y') if event.get('created_at') else '',
+                formatted_date,
                 event.get('created_by', '')
             ])
         

@@ -190,7 +190,7 @@ def main():
     tester.test_get_dashboard_stats()
     
     # Test getting events
-    tester.test_get_events()
+    events = tester.test_get_events()
     
     # Test creating a new event
     event_data = {
@@ -213,9 +213,61 @@ def main():
         print("❌ Event creation failed")
     else:
         print(f"✅ Event created with ID: {event_id}")
-        
-    # Test getting events again to verify the new event is in the list
-    tester.test_get_events()
+    
+    # Test getting operational logs
+    logs = tester.test_get_logs()
+    initial_log_count = len(logs)
+    print(f"Initial log count: {initial_log_count}")
+    
+    # Test creating operational logs with different priorities
+    log_data_normal = {
+        "action": "Controllo magazzino attrezzature",
+        "details": "Verifica scorte attrezzature antincendio. Tutto in ordine, scorte sufficienti per 2 settimane",
+        "priority": "normale",
+        "event_id": event_id if event_id else None
+    }
+    
+    log_id_normal = tester.test_create_log(log_data_normal)
+    if not log_id_normal:
+        print("❌ Normal priority log creation failed")
+    else:
+        print(f"✅ Normal priority log created with ID: {log_id_normal}")
+    
+    log_data_high = {
+        "action": "Aggiornamento emergenza incendio",
+        "details": "Situazione sotto controllo, mezzi aerei in arrivo",
+        "priority": "alta",
+        "event_id": event_id if event_id else None
+    }
+    
+    log_id_high = tester.test_create_log(log_data_high)
+    if not log_id_high:
+        print("❌ High priority log creation failed")
+    else:
+        print(f"✅ High priority log created with ID: {log_id_high}")
+    
+    log_data_low = {
+        "action": "Routine di controllo",
+        "details": "Controllo routine sistemi comunicazione",
+        "priority": "bassa",
+        "event_id": None
+    }
+    
+    log_id_low = tester.test_create_log(log_data_low)
+    if not log_id_low:
+        print("❌ Low priority log creation failed")
+    else:
+        print(f"✅ Low priority log created with ID: {log_id_low}")
+    
+    # Test getting logs again to verify the new logs are in the list
+    updated_logs = tester.test_get_logs()
+    if len(updated_logs) > initial_log_count:
+        print(f"✅ Log count increased from {initial_log_count} to {len(updated_logs)}")
+    else:
+        print(f"❌ Log count did not increase as expected")
+    
+    # Test getting dashboard stats again to verify log count updated
+    tester.test_get_dashboard_stats()
 
     # Print results
     print(f"\n📊 Tests passed: {tester.tests_passed}/{tester.tests_run}")

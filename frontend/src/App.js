@@ -301,6 +301,16 @@ function App() {
     }
   };
 
+  const getSeverityColor = (severity) => {
+    switch (severity) {
+      case 'critica': return 'bg-red-100 text-red-800';
+      case 'alta': return 'bg-orange-100 text-orange-800';
+      case 'media': return 'bg-yellow-100 text-yellow-800';
+      case 'bassa': return 'bg-green-100 text-green-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
   const getPriorityColor = (priority) => {
     switch (priority) {
       case 'alta': return 'bg-red-100 text-red-800';

@@ -180,9 +180,16 @@ function App() {
           Authorization: `Bearer ${token}`
         },
         body: JSON.stringify({
-          ...eventForm,
+          title: eventForm.title,
+          description: eventForm.description,
+          event_type: eventForm.event_type,
+          severity: eventForm.severity,
           latitude: eventForm.latitude ? parseFloat(eventForm.latitude) : null,
-          longitude: eventForm.longitude ? parseFloat(eventForm.longitude) : null
+          longitude: eventForm.longitude ? parseFloat(eventForm.longitude) : null,
+          address: eventForm.address || null,
+          notes: eventForm.notes || null,
+          resources_needed: eventForm.resources_needed || [],
+          status: "aperto"
         })
       });
       

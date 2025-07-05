@@ -77,6 +77,22 @@ function App() {
     notes: ''
   });
 
+  // Operational Log form state
+  const [logForm, setLogForm] = useState({
+    action: '',
+    details: '',
+    priority: 'normale',
+    event_id: ''
+  });
+
+  // Filter states
+  const [logFilters, setLogFilters] = useState({
+    priority: '',
+    startDate: '',
+    endDate: '',
+    operator: ''
+  });
+
   // Check authentication on mount
   useEffect(() => {
     if (token) {

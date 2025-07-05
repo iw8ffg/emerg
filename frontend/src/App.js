@@ -343,6 +343,77 @@ function App() {
     return matchesPriority && matchesOperator && matchesDate;
   });
 
+  // Load report templates
+  const loadReportTemplates = async () => {
+    if (!token) return;
+    
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/reports/templates`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setReportTemplates(data);
+      }
+    } catch (error) {
+      console.error('Failed to load report templates:', error);
+    }
+  };
+
+  // Generate report
+  const generateReport = async (e) => {
+    e.preventDefault();
+    setIsGeneratingReport(true);
+    setError('');
+    
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/reports/generate`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify(reportForm)
+      });
+      
+      if (response.ok) {
+        // Get filename from response headers
+        const contentDisposition = response.headers.get('content-disposition');
+        const filename = contentDisposition 
+          ? contentDisposition.split('filename=')[1].replace(/"/g, '')
+          : `report_${reportForm.report_type}_${new Date().getTime()}.${reportForm.format === 'pdf' ? 'pdf' : 'xlsx'}`;
+        
+        // Download file
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        
+        setSuccess('Report generato e scaricato con successo!');
+      } else {
+        const data = await response.json();
+        setError(data.detail || 'Errore durante la generazione del report');
+      }
+    } catch (error) {
+      setError('Errore di connessione al server');
+    } finally {
+      setIsGeneratingReport(false);
+    }
+  };
+
+  // Load report templates when accessing reports
+  useEffect(() => {
+    if (currentView === 'reports') {
+      loadReportTemplates();
+    }
+  }, [currentView]);
+
   const getStatusColor = (status) => {
     switch (status) {
       case 'aperto': return 'bg-red-100 text-red-800';

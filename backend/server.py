@@ -114,6 +114,17 @@ class TrainedResource(BaseModel):
     created_at: datetime = Field(default_factory=datetime.now)
     updated_at: Optional[datetime] = None
 
+class ReportRequest(BaseModel):
+    report_type: str  # events, logs, statistics, inventory, resources
+    format: str = "pdf"  # pdf, excel, csv
+    start_date: Optional[str] = None
+    end_date: Optional[str] = None
+    event_type: Optional[str] = None
+    severity: Optional[str] = None
+    priority: Optional[str] = None
+    operator: Optional[str] = None
+    status: Optional[str] = None
+
 # Helper functions
 def hash_password(password: str) -> str:
     return hashlib.sha256(password.encode()).hexdigest()

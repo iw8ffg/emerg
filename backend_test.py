@@ -224,7 +224,8 @@ def main():
         "action": "Controllo magazzino attrezzature",
         "details": "Verifica scorte attrezzature antincendio. Tutto in ordine, scorte sufficienti per 2 settimane",
         "priority": "normale",
-        "event_id": event_id if event_id else None
+        "event_id": event_id if event_id else None,
+        "operator": tester.user_info.get('username')
     }
     
     log_id_normal = tester.test_create_log(log_data_normal)
@@ -237,7 +238,8 @@ def main():
         "action": "Aggiornamento emergenza incendio",
         "details": "Situazione sotto controllo, mezzi aerei in arrivo",
         "priority": "alta",
-        "event_id": event_id if event_id else None
+        "event_id": event_id if event_id else None,
+        "operator": tester.user_info.get('username')
     }
     
     log_id_high = tester.test_create_log(log_data_high)
@@ -250,7 +252,8 @@ def main():
         "action": "Routine di controllo",
         "details": "Controllo routine sistemi comunicazione",
         "priority": "bassa",
-        "event_id": None
+        "event_id": None,
+        "operator": tester.user_info.get('username')
     }
     
     log_id_low = tester.test_create_log(log_data_low)

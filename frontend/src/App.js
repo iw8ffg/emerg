@@ -520,6 +520,17 @@ function App() {
               </button>
             )}
             
+            <button
+              onClick={() => setCurrentView('reports')}
+              className={`py-4 px-2 border-b-2 font-medium text-sm ${
+                currentView === 'reports' 
+                  ? 'border-blue-500 text-blue-600' 
+                  : 'border-transparent text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              Reportistica
+            </button>
+            
             {canAccess(['admin', 'coordinator', 'warehouse']) && (
               <button
                 onClick={() => setCurrentView('inventory')}

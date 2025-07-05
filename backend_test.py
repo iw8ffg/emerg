@@ -156,6 +156,7 @@ def main():
     
     # Test creating a new event
     event_data = {
+        "id": f"test-{datetime.now().strftime('%Y%m%d%H%M%S')}",
         "title": "Test Incendio Boschivo",
         "description": "Incendio in zona boschiva, richiesto intervento immediato",
         "event_type": "incendio",
@@ -163,7 +164,10 @@ def main():
         "latitude": 45.4642,
         "longitude": 9.1900,
         "address": "Via Test, Milano",
-        "notes": "Vento forte, situazione critica"
+        "notes": "Vento forte, situazione critica",
+        "status": "aperto",
+        "created_by": "admin",
+        "resources_needed": []
     }
     
     event_id = tester.test_create_event(event_data)

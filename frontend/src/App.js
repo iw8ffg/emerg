@@ -1014,6 +1014,16 @@ function App() {
           </div>
         )}
 
+        {/* Map View */}
+        {currentView === 'map' && (
+          <EmergencyEventsMap
+            token={token}
+            setError={setError}
+            setSuccess={setSuccess}
+            API_BASE_URL={API_BASE_URL}
+          />
+        )}
+
         {/* Create Event View */}
         {currentView === 'create-event' && canAccess(['admin', 'coordinator', 'operator']) && (
           <div className="bg-white rounded-lg shadow">

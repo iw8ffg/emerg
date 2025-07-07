@@ -666,6 +666,90 @@ def main():
     else:
         print(f"✅ Event created with ID: {event_id}")
     
+    # Test creating events for map testing
+    print("\n--- Testing Map Events Functionality ---")
+    
+    # Create test events with coordinates for map testing
+    map_test_events = [
+        {
+            "id": f"map-test-1-{datetime.now().strftime('%Y%m%d%H%M%S')}",
+            "title": "Incendio Duomo Milano",
+            "description": "Incendio di grave entità presso il Duomo di Milano",
+            "event_type": "incendio",
+            "severity": "critica",
+            "latitude": 45.4642,
+            "longitude": 9.1900,
+            "address": "Piazza del Duomo, Milano",
+            "status": "aperto",
+            "notes": "Evento di test per la mappa",
+            "created_by": "admin",
+            "resources_needed": []
+        },
+        {
+            "id": f"map-test-2-{datetime.now().strftime('%Y%m%d%H%M%S')}",
+            "title": "Alluvione Colosseo",
+            "description": "Alluvione nei pressi del Colosseo",
+            "event_type": "alluvione",
+            "severity": "alta",
+            "latitude": 41.8902,
+            "longitude": 12.4922,
+            "address": "Piazza del Colosseo, Roma",
+            "status": "in_corso",
+            "notes": "Evento di test per la mappa",
+            "created_by": "admin",
+            "resources_needed": []
+        },
+        {
+            "id": f"map-test-3-{datetime.now().strftime('%Y%m%d%H%M%S')}",
+            "title": "Blackout Firenze Centro",
+            "description": "Interruzione di corrente nel centro storico",
+            "event_type": "blackout",
+            "severity": "media",
+            "latitude": 43.7696,
+            "longitude": 11.2558,
+            "address": "Piazza della Signoria, Firenze",
+            "status": "aperto",
+            "notes": "Evento di test per la mappa",
+            "created_by": "admin",
+            "resources_needed": []
+        }
+    ]
+    
+    map_event_ids = []
+    for event in map_test_events:
+        event_id = tester.test_create_event(event)
+        if event_id:
+            map_event_ids.append(event_id)
+            print(f"✅ Created map test event: {event['title']} with ID: {event_id}")
+        else:
+            print(f"❌ Failed to create map test event: {event['title']}")
+    
+    # Test getting map events
+    if map_event_ids:
+        # Test 1: Get all map events
+        map_events = tester.test_get_map_events()
+        
+        # Test 2: Filter by status
+        active_map_events = tester.test_get_map_events({"status": "active"})
+        print(f"Active map events: {len(active_map_events)}")
+        
+        # Test 3: Filter by event type
+        incendio_map_events = tester.test_get_map_events({"event_type": "incendio"})
+        print(f"Incendio map events: {len(incendio_map_events)}")
+        
+        # Test 4: Filter by severity
+        critica_map_events = tester.test_get_map_events({"severity": "critica"})
+        print(f"Critical severity map events: {len(critica_map_events)}")
+        
+        # Test 5: Combined filters
+        combined_map_events = tester.test_get_map_events({
+            "status": "active",
+            "event_type": "incendio"
+        })
+        print(f"Active incendio map events: {len(combined_map_events)}")
+    else:
+        print("❌ No map test events created, skipping map events tests")
+    
     # Test getting operational logs
     logs = tester.test_get_logs()
     initial_log_count = len(logs)

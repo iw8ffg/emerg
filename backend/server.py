@@ -975,6 +975,184 @@ async def get_report_templates(current_user: dict = Depends(get_current_user)):
         "filter_options": filter_options
     }
 
+# User Management endpoints (Admin only)
+@app.get("/api/admin/users")
+async def get_all_users(current_user: dict = Depends(get_current_user)):
+    # Check if user is admin
+    if current_user["role"] != "admin":
+        raise HTTPException(status_code=403, detail="Solo gli amministratori possono accedere a questa funzione")
+    
+    users = list(db.users.find({}, {"_id": 0, "password": 0}).sort("username", 1))
+    return users
+
+@app.post("/api/admin/users")
+async def create_user_admin(user: UserManagement, current_user: dict = Depends(get_current_user)):
+    # Check if user is admin
+    if current_user["role"] != "admin":
+        raise HTTPException(status_code=403, detail="Solo gli amministratori possono creare utenti")
+    
+    # Check if user exists
+    if db.users.find_one({"username": user.username}):
+        raise HTTPException(status_code=400, detail="Username già esistente")
+    
+    if db.users.find_one({"email": user.email}):
+        raise HTTPException(status_code=400, detail="Email già registrata")
+    
+    # Validate role
+    if user.role not in USER_ROLES:
+        raise HTTPException(status_code=400, detail="Ruolo non valido")
+    
+    # Create user
+    user_data = {
+        "username": user.username,
+        "email": user.email,
+        "password": hash_password(user.password or "default123"),
+        "role": user.role,
+        "full_name": user.full_name,
+        "active": user.active,
+        "created_at": datetime.now(),
+        "created_by": current_user["username"]
+    }
+    
+    db.users.insert_one(user_data)
+    return {"message": "Utente creato con successo"}
+
+@app.put("/api/admin/users/{username}")
+async def update_user_admin(username: str, user_update: UserUpdate, current_user: dict = Depends(get_current_user)):
+    # Check if user is admin
+    if current_user["role"] != "admin":
+        raise HTTPException(status_code=403, detail="Solo gli amministratori possono modificare utenti")
+    
+    # Cannot modify own account through this endpoint
+    if username == current_user["username"]:
+        raise HTTPException(status_code=400, detail="Non puoi modificare il tuo account tramite questa funzione")
+    
+    # Check if user exists
+    existing_user = db.users.find_one({"username": username})
+    if not existing_user:
+        raise HTTPException(status_code=404, detail="Utente non trovato")
+    
+    # Prepare update data
+    update_data = {"updated_at": datetime.now(), "updated_by": current_user["username"]}
+    
+    if user_update.email is not None:
+        # Check if email already exists for another user
+        email_check = db.users.find_one({"email": user_update.email, "username": {"$ne": username}})
+        if email_check:
+            raise HTTPException(status_code=400, detail="Email già utilizzata da un altro utente")
+        update_data["email"] = user_update.email
+    
+    if user_update.role is not None:
+        if user_update.role not in USER_ROLES:
+            raise HTTPException(status_code=400, detail="Ruolo non valido")
+        update_data["role"] = user_update.role
+    
+    if user_update.full_name is not None:
+        update_data["full_name"] = user_update.full_name
+    
+    if user_update.active is not None:
+        update_data["active"] = user_update.active
+    
+    if user_update.new_password is not None:
+        update_data["password"] = hash_password(user_update.new_password)
+    
+    # Update user
+    result = db.users.update_one({"username": username}, {"$set": update_data})
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Utente non trovato")
+    
+    return {"message": "Utente aggiornato con successo"}
+
+@app.delete("/api/admin/users/{username}")
+async def delete_user_admin(username: str, current_user: dict = Depends(get_current_user)):
+    # Check if user is admin
+    if current_user["role"] != "admin":
+        raise HTTPException(status_code=403, detail="Solo gli amministratori possono eliminare utenti")
+    
+    # Cannot delete own account
+    if username == current_user["username"]:
+        raise HTTPException(status_code=400, detail="Non puoi eliminare il tuo account")
+    
+    # Cannot delete admin users (safety measure)
+    user_to_delete = db.users.find_one({"username": username})
+    if not user_to_delete:
+        raise HTTPException(status_code=404, detail="Utente non trovato")
+    
+    if user_to_delete["role"] == "admin":
+        raise HTTPException(status_code=400, detail="Non è possibile eliminare account amministratore")
+    
+    result = db.users.delete_one({"username": username})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Utente non trovato")
+    
+    return {"message": "Utente eliminato con successo"}
+
+@app.post("/api/admin/users/{username}/reset-password")
+async def reset_user_password(username: str, current_user: dict = Depends(get_current_user)):
+    # Check if user is admin
+    if current_user["role"] != "admin":
+        raise HTTPException(status_code=403, detail="Solo gli amministratori possono resettare password")
+    
+    # Check if user exists
+    if not db.users.find_one({"username": username}):
+        raise HTTPException(status_code=404, detail="Utente non trovato")
+    
+    # Reset password to default
+    new_password = "reset123"
+    hashed_password = hash_password(new_password)
+    
+    db.users.update_one(
+        {"username": username},
+        {"$set": {
+            "password": hashed_password,
+            "password_reset_at": datetime.now(),
+            "password_reset_by": current_user["username"]
+        }}
+    )
+    
+    return {"message": f"Password resettata con successo. Nuova password: {new_password}"}
+
+@app.get("/api/admin/stats")
+async def get_admin_stats(current_user: dict = Depends(get_current_user)):
+    # Check if user is admin
+    if current_user["role"] != "admin":
+        raise HTTPException(status_code=403, detail="Solo gli amministratori possono accedere a queste statistiche")
+    
+    # User statistics
+    total_users = db.users.count_documents({})
+    active_users = db.users.count_documents({"active": True})
+    users_by_role = {}
+    for role in USER_ROLES.keys():
+        users_by_role[role] = db.users.count_documents({"role": role})
+    
+    # System statistics
+    total_events = db.events.count_documents({})
+    total_logs = db.logs.count_documents({})
+    total_inventory = db.inventory.count_documents({})
+    
+    # Recent activity (last 7 days)
+    seven_days_ago = datetime.now() - timedelta(days=7)
+    recent_events = db.events.count_documents({"created_at": {"$gte": seven_days_ago.isoformat()}})
+    recent_logs = db.logs.count_documents({"timestamp": {"$gte": seven_days_ago.isoformat()}})
+    
+    return {
+        "users": {
+            "total": total_users,
+            "active": active_users,
+            "inactive": total_users - active_users,
+            "by_role": users_by_role
+        },
+        "system": {
+            "total_events": total_events,
+            "total_logs": total_logs,
+            "total_inventory": total_inventory
+        },
+        "recent_activity": {
+            "events_last_7_days": recent_events,
+            "logs_last_7_days": recent_logs
+        }
+    }
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8001)

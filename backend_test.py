@@ -1,7 +1,7 @@
 import requests
 import sys
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 
 class EmergencySystemAPITester:
     def __init__(self, base_url="https://5f984545-e129-4cc2-a34a-9e9847a0f0a0.preview.emergentagent.com"):
@@ -12,6 +12,8 @@ class EmergencySystemAPITester:
         self.user_info = None
         self.created_logs = []
         self.created_events = []
+        self.created_inventory_items = []
+        self.created_users = []
 
     def run_test(self, name, method, endpoint, expected_status, data=None, headers=None):
         """Run a single API test"""

@@ -722,6 +722,19 @@ function App() {
                 Inventario
               </button>
             )}
+            
+            {user && user.role === 'admin' && (
+              <button
+                onClick={() => setCurrentView('admin')}
+                className={`py-4 px-2 border-b-2 font-medium text-sm ${
+                  currentView === 'admin' 
+                    ? 'border-blue-500 text-blue-600' 
+                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                Amministrazione
+              </button>
+            )}
           </div>
         </div>
       </nav>

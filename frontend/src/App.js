@@ -78,6 +78,8 @@ function App() {
   const [logs, setLogs] = useState([]);
   const [resources, setResources] = useState([]);
   const [dashboardStats, setDashboardStats] = useState({});
+  const [users, setUsers] = useState([]);
+  const [inventoryAlerts, setInventoryAlerts] = useState({});
 
   // Login form state
   const [loginForm, setLoginForm] = useState({ username: '', password: '' });
@@ -103,12 +105,44 @@ function App() {
     event_id: ''
   });
 
+  // Inventory form state
+  const [inventoryForm, setInventoryForm] = useState({
+    name: '',
+    category: '',
+    quantity: 0,
+    unit: 'pz',
+    location: '',
+    min_quantity: 0,
+    max_quantity: '',
+    expiry_date: '',
+    supplier: '',
+    cost_per_unit: '',
+    notes: ''
+  });
+
+  // User management form state
+  const [userForm, setUserForm] = useState({
+    username: '',
+    email: '',
+    password: '',
+    role: 'viewer',
+    full_name: '',
+    active: true
+  });
+
   // Filter states
   const [logFilters, setLogFilters] = useState({
     priority: '',
     startDate: '',
     endDate: '',
     operator: ''
+  });
+
+  const [inventoryFilters, setInventoryFilters] = useState({
+    category: '',
+    location: '',
+    low_stock: false,
+    expiring_soon: false
   });
 
   // Report states

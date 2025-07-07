@@ -712,7 +712,190 @@ def main():
     
     # Test generating PDF statistics report
     tester.test_generate_pdf_statistics_report()
-
+    
+    # Test inventory management functionality
+    print("\n--- Testing Inventory Management ---")
+    
+    # Test getting inventory items
+    initial_inventory = tester.test_get_inventory()
+    initial_inventory_count = len(initial_inventory)
+    print(f"Initial inventory count: {initial_inventory_count}")
+    
+    # Test creating a new inventory item
+    tomorrow = datetime.now() + timedelta(days=1)
+    next_year = datetime.now() + timedelta(days=365)
+    
+    inventory_item_data = {
+        "name": "Kit Pronto Soccorso",
+        "category": "medicinali",
+        "quantity": 25,
+        "unit": "pz",
+        "location": "Magazzino A, Scaffale 2",
+        "min_quantity": 5,
+        "max_quantity": 50,
+        "expiry_date": next_year.strftime("%Y-%m-%d"),
+        "supplier": "MedSupply Italia",
+        "cost_per_unit": 45.50,
+        "notes": "Kit completi per emergenze mediche"
+    }
+    
+    item_id = tester.test_create_inventory_item(inventory_item_data)
+    if not item_id:
+        print("❌ Inventory item creation failed")
+    else:
+        print(f"✅ Inventory item created with ID: {item_id}")
+        
+        # Test getting the created item
+        item = tester.test_get_inventory_item(item_id)
+        if item:
+            print(f"✅ Retrieved created inventory item")
+        else:
+            print(f"❌ Failed to retrieve created inventory item")
+        
+        # Test updating the item
+        updated_item_data = inventory_item_data.copy()
+        updated_item_data["quantity"] = 30
+        updated_item_data["notes"] = "Kit completi per emergenze mediche - Aggiornato"
+        
+        if tester.test_update_inventory_item(item_id, updated_item_data):
+            print(f"✅ Updated inventory item")
+        else:
+            print(f"❌ Failed to update inventory item")
+        
+        # Test updating quantity
+        new_quantity = tester.test_update_inventory_quantity(
+            item_id, 
+            5, 
+            "Aggiunta scorte da nuovo fornitore"
+        )
+        if new_quantity:
+            print(f"✅ Updated inventory quantity to {new_quantity}")
+        else:
+            print(f"❌ Failed to update inventory quantity")
+    
+    # Test getting inventory with filters
+    filtered_inventory = tester.test_get_inventory({"category": "medicinali"})
+    print(f"Filtered inventory (medicinali): {len(filtered_inventory)} items")
+    
+    # Test getting inventory categories
+    categories = tester.test_get_inventory_categories()
+    print(f"Inventory categories: {categories}")
+    
+    # Test getting inventory locations
+    locations = tester.test_get_inventory_locations()
+    print(f"Inventory locations: {locations}")
+    
+    # Test getting inventory alerts
+    alerts = tester.test_get_inventory_alerts()
+    
+    # Create an item that will trigger low stock alert
+    low_stock_item_data = {
+        "name": "Maschere Antipolvere",
+        "category": "attrezzature",
+        "quantity": 3,
+        "unit": "pz",
+        "location": "Magazzino B, Scaffale 1",
+        "min_quantity": 10,
+        "max_quantity": 50,
+        "supplier": "Safety Equipment SRL",
+        "notes": "Maschere per protezione da polveri sottili"
+    }
+    
+    low_stock_item_id = tester.test_create_inventory_item(low_stock_item_data)
+    if low_stock_item_id:
+        print(f"✅ Created low stock item with ID: {low_stock_item_id}")
+    
+    # Create an item that will trigger expiry alert
+    expiring_item_data = {
+        "name": "Medicinali di Emergenza",
+        "category": "medicinali",
+        "quantity": 15,
+        "unit": "pz",
+        "location": "Magazzino A, Scaffale 3",
+        "min_quantity": 5,
+        "expiry_date": tomorrow.strftime("%Y-%m-%d"),
+        "supplier": "Pharma Italia",
+        "notes": "Medicinali per emergenze - PROSSIMI ALLA SCADENZA"
+    }
+    
+    expiring_item_id = tester.test_create_inventory_item(expiring_item_data)
+    if expiring_item_id:
+        print(f"✅ Created expiring item with ID: {expiring_item_id}")
+    
+    # Check alerts again after creating items that should trigger alerts
+    updated_alerts = tester.test_get_inventory_alerts()
+    if updated_alerts.get('total_alerts', 0) > alerts.get('total_alerts', 0):
+        print(f"✅ Alerts increased from {alerts.get('total_alerts', 0)} to {updated_alerts.get('total_alerts', 0)}")
+    else:
+        print(f"❌ Alerts did not increase as expected")
+    
+    # Test user management functionality (admin only)
+    print("\n--- Testing User Management (Admin Only) ---")
+    
+    # Test getting admin stats
+    admin_stats = tester.test_get_admin_stats()
+    
+    # Test getting all users
+    users = tester.test_get_admin_users()
+    initial_user_count = len(users)
+    print(f"Initial user count: {initial_user_count}")
+    
+    # Test creating a new user
+    test_username = f"operatore1_{datetime.now().strftime('%H%M%S')}"
+    user_data = {
+        "username": test_username,
+        "full_name": "Mario Rossi",
+        "email": f"{test_username}@emergency.local",
+        "password": "password123",
+        "role": "operator",
+        "active": True
+    }
+    
+    if tester.test_create_user(user_data):
+        print(f"✅ Created user: {test_username}")
+        
+        # Test updating the user
+        update_data = {
+            "full_name": "Mario Rossi Updated",
+            "role": "warehouse"
+        }
+        
+        if tester.test_update_user(test_username, update_data):
+            print(f"✅ Updated user: {test_username}")
+        else:
+            print(f"❌ Failed to update user: {test_username}")
+        
+        # Test resetting user password
+        reset_message = tester.test_reset_user_password(test_username)
+        if reset_message:
+            print(f"✅ Reset password for user: {test_username}")
+            print(f"Reset message: {reset_message}")
+        else:
+            print(f"❌ Failed to reset password for user: {test_username}")
+        
+        # Test deleting the user
+        if tester.test_delete_user(test_username):
+            print(f"✅ Deleted user: {test_username}")
+        else:
+            print(f"❌ Failed to delete user: {test_username}")
+    else:
+        print(f"❌ Failed to create user: {test_username}")
+    
+    # Test getting users again to verify changes
+    updated_users = tester.test_get_admin_users()
+    print(f"Final user count: {len(updated_users)}")
+    
+    # Test getting admin stats again
+    updated_admin_stats = tester.test_get_admin_stats()
+    
+    # Clean up created inventory items
+    print("\n--- Cleaning Up Test Data ---")
+    for item_id in tester.created_inventory_items:
+        if tester.test_delete_inventory_item(item_id):
+            print(f"✅ Cleaned up inventory item: {item_id}")
+        else:
+            print(f"❌ Failed to clean up inventory item: {item_id}")
+    
     # Print results
     print(f"\n📊 Tests passed: {tester.tests_passed}/{tester.tests_run}")
     return 0 if tester.tests_passed == tester.tests_run else 1

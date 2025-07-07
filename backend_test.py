@@ -627,13 +627,24 @@ def main():
     # Setup
     tester = EmergencySystemAPITester()
     
-    # Test health check
-    tester.test_health_check()
+    print("\n=== TESTING AUTOMATIC INITIALIZATION FUNCTIONALITY ===")
     
-    # Test login
-    if not tester.test_login("admin", "admin123"):
-        print("❌ Login failed, stopping tests")
+    # Test health check to verify the system is running
+    print("\n--- Testing System Health ---")
+    if tester.test_health_check():
+        print("✅ System is running and healthy")
+    else:
+        print("❌ System health check failed")
         return 1
+    
+    # Test login with admin credentials (should be automatically created)
+    print("\n--- Testing Admin Login with Auto-Created Credentials ---")
+    if not tester.test_login("admin", "admin123"):
+        print("❌ Login with auto-created admin credentials failed, initialization may not have worked")
+        return 1
+    else:
+        print("✅ Successfully logged in with auto-created admin credentials")
+        print("✅ Admin user was automatically created during initialization")
 
     # Test getting current user info
     tester.test_get_current_user()

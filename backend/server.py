@@ -585,6 +585,67 @@ async def get_emergency_events(current_user: dict = Depends(get_current_user)):
     events = list(db.events.find({}, {"_id": 0}).sort("created_at", -1))
     return events
 
+@app.get("/api/events/map")
+async def get_map_events(
+    status: Optional[str] = None,
+    event_type: Optional[str] = None,
+    severity: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """Get events with coordinates for map display"""
+    # Build query for events with coordinates
+    query = {
+        "latitude": {"$exists": True, "$ne": None},
+        "longitude": {"$exists": True, "$ne": None}
+    }
+    
+    # Apply filters
+    if status:
+        if status == "active":
+            query["status"] = {"$in": ["aperto", "in_corso"]}
+        else:
+            query["status"] = status
+    else:
+        # Default to active events only
+        query["status"] = {"$in": ["aperto", "in_corso"]}
+    
+    if event_type:
+        query["event_type"] = event_type
+    
+    if severity:
+        query["severity"] = severity
+    
+    events = list(db.events.find(query, {"_id": 0}).sort("created_at", -1))
+    
+    # Format events for map display
+    map_events = []
+    for event in events:
+        if event.get('latitude') is not None and event.get('longitude') is not None:
+            map_events.append({
+                "id": event["id"],
+                "title": event["title"],
+                "description": event["description"],
+                "event_type": event["event_type"],
+                "severity": event["severity"],
+                "status": event["status"],
+                "latitude": float(event["latitude"]),
+                "longitude": float(event["longitude"]),
+                "address": event.get("address", ""),
+                "created_at": event["created_at"],
+                "created_by": event["created_by"],
+                "notes": event.get("notes", "")
+            })
+    
+    return {
+        "events": map_events,
+        "total": len(map_events),
+        "filters_applied": {
+            "status": status or "active",
+            "event_type": event_type,
+            "severity": severity
+        }
+    }
+
 @app.get("/api/events/{event_id}")
 async def get_emergency_event(event_id: str, current_user: dict = Depends(get_current_user)):
     event = db.events.find_one({"id": event_id}, {"_id": 0})

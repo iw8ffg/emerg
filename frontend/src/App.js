@@ -1155,14 +1155,38 @@ function App() {
 
         {/* Inventory View */}
         {currentView === 'inventory' && canAccess(['admin', 'coordinator', 'warehouse']) && (
-          <div className="bg-white rounded-lg shadow">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <h3 className="text-lg font-medium text-gray-900">Inventario Magazzino</h3>
-            </div>
-            <div className="px-6 py-4">
-              <p className="text-gray-500">Modulo inventario in fase di sviluppo...</p>
-            </div>
-          </div>
+          <InventoryManagement
+            token={token}
+            inventory={inventory}
+            setInventory={setInventory}
+            inventoryFilters={inventoryFilters}
+            setInventoryFilters={setInventoryFilters}
+            inventoryForm={inventoryForm}
+            setInventoryForm={setInventoryForm}
+            user={user}
+            setError={setError}
+            setSuccess={setSuccess}
+            loading={loading}
+            setLoading={setLoading}
+            API_BASE_URL={API_BASE_URL}
+          />
+        )}
+
+        {/* User Management View (Admin Only) */}
+        {currentView === 'admin' && (
+          <UserManagement
+            token={token}
+            users={users}
+            setUsers={setUsers}
+            userForm={userForm}
+            setUserForm={setUserForm}
+            user={user}
+            setError={setError}
+            setSuccess={setSuccess}
+            loading={loading}
+            setLoading={setLoading}
+            API_BASE_URL={API_BASE_URL}
+          />
         )}
 
         {/* Operational Logs View */}

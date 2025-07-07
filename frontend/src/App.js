@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
+import InventoryManagement from './components/InventoryManagement';
+import UserManagement from './components/UserManagement';
 
 // Icons as simple SVG components
 const AlertIcon = () => (

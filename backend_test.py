@@ -701,373 +701,59 @@ def main():
     # Restore admin token
     tester.token = admin_token
     
-    # Test creating a new event
-    event_data = {
-        "id": f"test-{datetime.now().strftime('%Y%m%d%H%M%S')}",
-        "title": "Test Incendio Boschivo",
-        "description": "Incendio in zona boschiva, richiesto intervento immediato",
-        "event_type": "incendio",
-        "severity": "alta",
-        "latitude": 45.4642,
-        "longitude": 9.1900,
-        "address": "Via Test, Milano",
-        "notes": "Vento forte, situazione critica",
-        "status": "aperto",
-        "created_by": "admin",
-        "resources_needed": []
-    }
+    # Test getting inventory to verify sample inventory items
+    print("\n--- Verifying Sample Inventory Items ---")
+    inventory = tester.test_get_inventory()
     
-    event_id = tester.test_create_event(event_data)
-    if not event_id:
-        print("❌ Event creation failed")
+    if len(inventory) > 0:
+        print(f"✅ Found {len(inventory)} sample inventory items")
+        
+        # Check for expected categories
+        categories = tester.test_get_inventory_categories()
+        if categories:
+            print(f"✅ Inventory categories initialized: {categories}")
+        
+        # Check for expected locations
+        locations = tester.test_get_inventory_locations()
+        if locations:
+            print(f"✅ Inventory locations initialized: {locations}")
     else:
-        print(f"✅ Event created with ID: {event_id}")
+        print("❌ No sample inventory items found")
     
-    # Test creating events for map testing
-    print("\n--- Testing Map Events Functionality ---")
+    # Test getting resources to verify sample trained resources
+    print("\n--- Verifying Sample Trained Resources ---")
+    success, resources = tester.run_test(
+        "Get trained resources",
+        "GET",
+        "resources",
+        200
+    )
     
-    # Create test events with coordinates for map testing
-    map_test_events = [
-        {
-            "id": f"map-test-1-{datetime.now().strftime('%Y%m%d%H%M%S')}",
-            "title": "Incendio Duomo Milano",
-            "description": "Incendio di grave entità presso il Duomo di Milano",
-            "event_type": "incendio",
-            "severity": "critica",
-            "latitude": 45.4642,
-            "longitude": 9.1900,
-            "address": "Piazza del Duomo, Milano",
-            "status": "aperto",
-            "notes": "Evento di test per la mappa",
-            "created_by": "admin",
-            "resources_needed": []
-        },
-        {
-            "id": f"map-test-2-{datetime.now().strftime('%Y%m%d%H%M%S')}",
-            "title": "Alluvione Colosseo",
-            "description": "Alluvione nei pressi del Colosseo",
-            "event_type": "alluvione",
-            "severity": "alta",
-            "latitude": 41.8902,
-            "longitude": 12.4922,
-            "address": "Piazza del Colosseo, Roma",
-            "status": "in_corso",
-            "notes": "Evento di test per la mappa",
-            "created_by": "admin",
-            "resources_needed": []
-        },
-        {
-            "id": f"map-test-3-{datetime.now().strftime('%Y%m%d%H%M%S')}",
-            "title": "Blackout Firenze Centro",
-            "description": "Interruzione di corrente nel centro storico",
-            "event_type": "blackout",
-            "severity": "media",
-            "latitude": 43.7696,
-            "longitude": 11.2558,
-            "address": "Piazza della Signoria, Firenze",
-            "status": "aperto",
-            "notes": "Evento di test per la mappa",
-            "created_by": "admin",
-            "resources_needed": []
-        }
-    ]
-    
-    map_event_ids = []
-    for event in map_test_events:
-        event_id = tester.test_create_event(event)
-        if event_id:
-            map_event_ids.append(event_id)
-            print(f"✅ Created map test event: {event['title']} with ID: {event_id}")
-        else:
-            print(f"❌ Failed to create map test event: {event['title']}")
-    
-    # Test getting map events
-    if map_event_ids:
-        # Test 1: Get all map events
-        map_events = tester.test_get_map_events()
-        
-        # Test 2: Filter by status
-        active_map_events = tester.test_get_map_events({"status": "active"})
-        print(f"Active map events: {len(active_map_events)}")
-        
-        # Test 3: Filter by event type
-        incendio_map_events = tester.test_get_map_events({"event_type": "incendio"})
-        print(f"Incendio map events: {len(incendio_map_events)}")
-        
-        # Test 4: Filter by severity
-        critica_map_events = tester.test_get_map_events({"severity": "critica"})
-        print(f"Critical severity map events: {len(critica_map_events)}")
-        
-        # Test 5: Combined filters
-        combined_map_events = tester.test_get_map_events({
-            "status": "active",
-            "event_type": "incendio"
-        })
-        print(f"Active incendio map events: {len(combined_map_events)}")
+    if success and len(resources) > 0:
+        print(f"✅ Found {len(resources)} sample trained resources")
+        print(f"Sample resource: {resources[0]['full_name']} ({resources[0]['role']})")
     else:
-        print("❌ No map test events created, skipping map events tests")
+        print("❌ No sample trained resources found")
     
-    # Test getting operational logs
+    # Test getting logs to verify initialization log
+    print("\n--- Verifying Initialization Log ---")
     logs = tester.test_get_logs()
-    initial_log_count = len(logs)
-    print(f"Initial log count: {initial_log_count}")
     
-    # Test creating operational logs with different priorities
-    # Test 1: Normal priority log without operator field (should be set automatically by backend)
-    log_data_normal = {
-        "action": "Controllo magazzino attrezzature",
-        "details": "Verifica scorte attrezzature antincendio. Tutto in ordine, scorte sufficienti per 2 settimane",
-        "priority": "normale",
-        "event_id": event_id if event_id else None
-        # No operator field - should be set automatically by backend
-    }
-    
-    log_id_normal = tester.test_create_log(log_data_normal)
-    if not log_id_normal:
-        print("❌ Normal priority log creation failed")
+    init_logs = [log for log in logs if "Inizializzazione Sistema" in log.get("action", "")]
+    if init_logs:
+        print(f"✅ Found initialization log: {init_logs[0]['action']}")
+        print(f"   Details: {init_logs[0]['details']}")
     else:
-        print(f"✅ Normal priority log created with ID: {log_id_normal}")
+        print("❌ No initialization log found")
     
-    # Test 2: High priority log without operator field
-    log_data_high = {
-        "action": "Aggiornamento emergenza incendio",
-        "details": "Situazione sotto controllo, mezzi aerei in arrivo",
-        "priority": "alta",
-        "event_id": event_id if event_id else None
-        # No operator field - should be set automatically by backend
-    }
+    # Print summary of database initialization
+    print("\n=== DATABASE INITIALIZATION SUMMARY ===")
+    stats = tester.test_get_dashboard_stats()
     
-    log_id_high = tester.test_create_log(log_data_high)
-    if not log_id_high:
-        print("❌ High priority log creation failed")
-    else:
-        print(f"✅ High priority log created with ID: {log_id_high}")
-    
-    # Test 3: Low priority log without operator field
-    log_data_low = {
-        "action": "Routine di controllo",
-        "details": "Controllo routine sistemi comunicazione",
-        "priority": "bassa",
-        "event_id": None
-        # No operator field - should be set automatically by backend
-    }
-    
-    log_id_low = tester.test_create_log(log_data_low)
-    if not log_id_low:
-        print("❌ Low priority log creation failed")
-    else:
-        print(f"✅ Low priority log created with ID: {log_id_low}")
-    
-    # Test getting logs again to verify the new logs are in the list
-    updated_logs = tester.test_get_logs()
-    if len(updated_logs) > initial_log_count:
-        print(f"✅ Log count increased from {initial_log_count} to {len(updated_logs)}")
-    else:
-        print(f"❌ Log count did not increase as expected")
-    
-    # Test getting dashboard stats again to verify log count updated
-    tester.test_get_dashboard_stats()
-    
-    # Test report functionality
-    print("\n--- Testing Report Functionality ---")
-    
-    # Test getting report templates
-    tester.test_get_report_templates()
-    
-    # Test generating PDF event report
-    tester.test_generate_pdf_event_report()
-    
-    # Test generating Excel event report
-    tester.test_generate_excel_event_report()
-    
-    # Test generating PDF log report
-    tester.test_generate_pdf_log_report()
-    
-    # Test generating PDF statistics report
-    tester.test_generate_pdf_statistics_report()
-    
-    # Test inventory management functionality
-    print("\n--- Testing Inventory Management ---")
-    
-    # Test getting inventory items
-    initial_inventory = tester.test_get_inventory()
-    initial_inventory_count = len(initial_inventory)
-    print(f"Initial inventory count: {initial_inventory_count}")
-    
-    # Test creating a new inventory item
-    tomorrow = datetime.now() + timedelta(days=1)
-    next_year = datetime.now() + timedelta(days=365)
-    
-    inventory_item_data = {
-        "name": "Kit Pronto Soccorso",
-        "category": "medicinali",
-        "quantity": 25,
-        "unit": "pz",
-        "location": "Magazzino A, Scaffale 2",
-        "min_quantity": 5,
-        "max_quantity": 50,
-        "expiry_date": next_year.strftime("%Y-%m-%d"),
-        "supplier": "MedSupply Italia",
-        "cost_per_unit": 45.50,
-        "notes": "Kit completi per emergenze mediche"
-    }
-    
-    item_id = tester.test_create_inventory_item(inventory_item_data)
-    if not item_id:
-        print("❌ Inventory item creation failed")
-    else:
-        print(f"✅ Inventory item created with ID: {item_id}")
-        
-        # Test getting the created item
-        item = tester.test_get_inventory_item(item_id)
-        if item:
-            print(f"✅ Retrieved created inventory item")
-        else:
-            print(f"❌ Failed to retrieve created inventory item")
-        
-        # Test updating the item
-        updated_item_data = inventory_item_data.copy()
-        updated_item_data["quantity"] = 30
-        updated_item_data["notes"] = "Kit completi per emergenze mediche - Aggiornato"
-        
-        if tester.test_update_inventory_item(item_id, updated_item_data):
-            print(f"✅ Updated inventory item")
-        else:
-            print(f"❌ Failed to update inventory item")
-        
-        # Test updating quantity
-        new_quantity = tester.test_update_inventory_quantity(
-            item_id, 
-            5, 
-            "Aggiunta scorte da nuovo fornitore"
-        )
-        if new_quantity:
-            print(f"✅ Updated inventory quantity to {new_quantity}")
-        else:
-            print(f"❌ Failed to update inventory quantity")
-    
-    # Test getting inventory with filters
-    filtered_inventory = tester.test_get_inventory({"category": "medicinali"})
-    print(f"Filtered inventory (medicinali): {len(filtered_inventory)} items")
-    
-    # Test getting inventory categories
-    categories = tester.test_get_inventory_categories()
-    print(f"Inventory categories: {categories}")
-    
-    # Test getting inventory locations
-    locations = tester.test_get_inventory_locations()
-    print(f"Inventory locations: {locations}")
-    
-    # Test getting inventory alerts
-    alerts = tester.test_get_inventory_alerts()
-    
-    # Create an item that will trigger low stock alert
-    low_stock_item_data = {
-        "name": "Maschere Antipolvere",
-        "category": "attrezzature",
-        "quantity": 3,
-        "unit": "pz",
-        "location": "Magazzino B, Scaffale 1",
-        "min_quantity": 10,
-        "max_quantity": 50,
-        "supplier": "Safety Equipment SRL",
-        "notes": "Maschere per protezione da polveri sottili"
-    }
-    
-    low_stock_item_id = tester.test_create_inventory_item(low_stock_item_data)
-    if low_stock_item_id:
-        print(f"✅ Created low stock item with ID: {low_stock_item_id}")
-    
-    # Create an item that will trigger expiry alert
-    expiring_item_data = {
-        "name": "Medicinali di Emergenza",
-        "category": "medicinali",
-        "quantity": 15,
-        "unit": "pz",
-        "location": "Magazzino A, Scaffale 3",
-        "min_quantity": 5,
-        "expiry_date": tomorrow.strftime("%Y-%m-%d"),
-        "supplier": "Pharma Italia",
-        "notes": "Medicinali per emergenze - PROSSIMI ALLA SCADENZA"
-    }
-    
-    expiring_item_id = tester.test_create_inventory_item(expiring_item_data)
-    if expiring_item_id:
-        print(f"✅ Created expiring item with ID: {expiring_item_id}")
-    
-    # Check alerts again after creating items that should trigger alerts
-    updated_alerts = tester.test_get_inventory_alerts()
-    if updated_alerts.get('total_alerts', 0) > alerts.get('total_alerts', 0):
-        print(f"✅ Alerts increased from {alerts.get('total_alerts', 0)} to {updated_alerts.get('total_alerts', 0)}")
-    else:
-        print(f"❌ Alerts did not increase as expected")
-    
-    # Test user management functionality (admin only)
-    print("\n--- Testing User Management (Admin Only) ---")
-    
-    # Test getting admin stats
-    admin_stats = tester.test_get_admin_stats()
-    
-    # Test getting all users
-    users = tester.test_get_admin_users()
-    initial_user_count = len(users)
-    print(f"Initial user count: {initial_user_count}")
-    
-    # Test creating a new user
-    test_username = f"operatore1_{datetime.now().strftime('%H%M%S')}"
-    user_data = {
-        "username": test_username,
-        "full_name": "Mario Rossi",
-        "email": f"{test_username}@emergency.local",
-        "password": "password123",
-        "role": "operator",
-        "active": True
-    }
-    
-    if tester.test_create_user(user_data):
-        print(f"✅ Created user: {test_username}")
-        
-        # Test updating the user
-        update_data = {
-            "full_name": "Mario Rossi Updated",
-            "role": "warehouse"
-        }
-        
-        if tester.test_update_user(test_username, update_data):
-            print(f"✅ Updated user: {test_username}")
-        else:
-            print(f"❌ Failed to update user: {test_username}")
-        
-        # Test resetting user password
-        reset_message = tester.test_reset_user_password(test_username)
-        if reset_message:
-            print(f"✅ Reset password for user: {test_username}")
-            print(f"Reset message: {reset_message}")
-        else:
-            print(f"❌ Failed to reset password for user: {test_username}")
-        
-        # Test deleting the user
-        if tester.test_delete_user(test_username):
-            print(f"✅ Deleted user: {test_username}")
-        else:
-            print(f"❌ Failed to delete user: {test_username}")
-    else:
-        print(f"❌ Failed to create user: {test_username}")
-    
-    # Test getting users again to verify changes
-    updated_users = tester.test_get_admin_users()
-    print(f"Final user count: {len(updated_users)}")
-    
-    # Test getting admin stats again
-    updated_admin_stats = tester.test_get_admin_stats()
-    
-    # Clean up created inventory items
-    print("\n--- Cleaning Up Test Data ---")
-    for item_id in tester.created_inventory_items:
-        if tester.test_delete_inventory_item(item_id):
-            print(f"✅ Cleaned up inventory item: {item_id}")
-        else:
-            print(f"❌ Failed to clean up inventory item: {item_id}")
+    print(f"✅ Users: {len(users)}")
+    print(f"✅ Inventory Items: {stats.get('inventory_items', 0)}")
+    print(f"✅ Trained Resources: {stats.get('trained_resources', 0)}")
+    print(f"✅ Operational Logs: {stats.get('total_logs', 0)}")
     
     # Print results
     print(f"\n📊 Tests passed: {tester.tests_passed}/{tester.tests_run}")

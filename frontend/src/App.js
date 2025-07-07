@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import './App.css';
 import InventoryManagement from './components/InventoryManagement';
 import UserManagement from './components/UserManagement';
+import EmergencyEventsMap from './components/EmergencyEventsMap';
 
 // Icons as simple SVG components
 const AlertIcon = () => (

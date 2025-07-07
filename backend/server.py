@@ -810,13 +810,44 @@ async def get_dashboard_stats(current_user: dict = Depends(get_current_user)):
     trained_resources = db.resources.count_documents({})
     total_logs = db.logs.count_documents({})
     
+    # Inventory alerts
+    low_stock_count = db.inventory.count_documents({
+        "$expr": {"$lt": ["$quantity", "$min_quantity"]}
+    })
+    
+    # Count expiring items (next 30 days)
+    today = datetime.now()
+    thirty_days_from_now = today + timedelta(days=30)
+    expiring_count = 0
+    
+    try:
+        all_items_with_expiry = list(db.inventory.find({"expiry_date": {"$exists": True, "$ne": None}}, {"expiry_date": 1}))
+        for item in all_items_with_expiry:
+            expiry_date = item.get('expiry_date')
+            if expiry_date:
+                if isinstance(expiry_date, str):
+                    try:
+                        expiry_date = datetime.fromisoformat(expiry_date.replace('Z', ''))
+                    except:
+                        continue
+                
+                if expiry_date <= thirty_days_from_now:
+                    expiring_count += 1
+    except:
+        expiring_count = 0
+    
     return {
         "total_events": total_events,
         "open_events": open_events,
         "critical_events": critical_events,
         "inventory_items": inventory_items,
         "trained_resources": trained_resources,
-        "total_logs": total_logs
+        "total_logs": total_logs,
+        "inventory_alerts": {
+            "low_stock": low_stock_count,
+            "expiring_soon": expiring_count,
+            "total": low_stock_count + expiring_count
+        }
     }
 
 @app.get("/api/health")

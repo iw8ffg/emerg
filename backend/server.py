@@ -76,7 +76,7 @@ class EmergencyEvent(BaseModel):
     address: Optional[str] = None
     status: str = "aperto"  # aperto, in_corso, risolto, chiuso
     created_at: datetime = Field(default_factory=datetime.now)
-    created_by: str
+    created_by: Optional[str] = None  # Will be set by the endpoint
     updated_at: Optional[datetime] = None
     resources_needed: Optional[List[str]] = []
     notes: Optional[str] = None

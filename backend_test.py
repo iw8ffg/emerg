@@ -301,6 +301,38 @@ class EmergencySystemAPITester:
                 print(f"First event: {json.dumps(response[0], indent=2)}")
             return response
         return []
+        
+    def test_get_map_events(self, params=None):
+        """Test getting events for map display with optional filters"""
+        endpoint = "events/map"
+        if params:
+            query_params = "&".join([f"{k}={v}" for k, v in params.items()])
+            endpoint = f"events/map?{query_params}"
+            
+        success, response = self.run_test(
+            f"Get map events {params if params else ''}",
+            "GET",
+            endpoint,
+            200
+        )
+        if success:
+            events = response.get('events', [])
+            print(f"Retrieved {len(events)} events for map display")
+            if len(events) > 0:
+                print(f"First map event: {json.dumps(events[0], indent=2)}")
+                
+                # Verify event structure for map
+                required_fields = ['id', 'title', 'description', 'event_type', 'severity', 
+                                  'status', 'latitude', 'longitude', 'created_at']
+                missing_fields = [field for field in required_fields if field not in events[0]]
+                
+                if missing_fields:
+                    print(f"❌ Missing required fields: {missing_fields}")
+                else:
+                    print(f"✅ All required fields present in map events")
+                    
+            return events
+        return []
 
     def test_create_event(self, event_data):
         """Test creating a new event"""

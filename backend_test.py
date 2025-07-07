@@ -646,14 +646,60 @@ def main():
         print("✅ Successfully logged in with auto-created admin credentials")
         print("✅ Admin user was automatically created during initialization")
 
-    # Test getting current user info
-    tester.test_get_current_user()
+    # Test getting current user info to verify admin role
+    print("\n--- Verifying Admin User Role ---")
+    if tester.test_get_current_user():
+        print("✅ Admin user has correct permissions")
+    else:
+        print("❌ Failed to verify admin user permissions")
     
-    # Test getting dashboard stats
+    # Test getting dashboard stats to verify database initialization
+    print("\n--- Verifying Database Initialization ---")
     tester.test_get_dashboard_stats()
     
-    # Test getting events
-    events = tester.test_get_events()
+    # Test getting users to verify sample users were created
+    print("\n--- Verifying Sample Users Creation ---")
+    users = tester.test_get_admin_users()
+    
+    # Check for expected sample users
+    expected_users = ["admin", "coordinatore1", "operatore1", "magazziniere1"]
+    found_users = [user.get("username") for user in users]
+    
+    for username in expected_users:
+        if username in found_users:
+            print(f"✅ Sample user '{username}' was automatically created")
+        else:
+            print(f"❌ Sample user '{username}' was not found")
+    
+    # Test login with sample user credentials
+    print("\n--- Testing Sample User Credentials ---")
+    
+    # Save admin token for later
+    admin_token = tester.token
+    
+    # Test coordinatore1 login
+    coord_tester = EmergencySystemAPITester()
+    if coord_tester.test_login("coordinatore1", "coord123"):
+        print("✅ Successfully logged in with coordinatore1 credentials")
+    else:
+        print("❌ Login with coordinatore1 credentials failed")
+    
+    # Test operatore1 login
+    oper_tester = EmergencySystemAPITester()
+    if oper_tester.test_login("operatore1", "oper123"):
+        print("✅ Successfully logged in with operatore1 credentials")
+    else:
+        print("❌ Login with operatore1 credentials failed")
+    
+    # Test magazziniere1 login
+    magaz_tester = EmergencySystemAPITester()
+    if magaz_tester.test_login("magazziniere1", "magaz123"):
+        print("✅ Successfully logged in with magazziniere1 credentials")
+    else:
+        print("❌ Login with magazziniere1 credentials failed")
+    
+    # Restore admin token
+    tester.token = admin_token
     
     # Test creating a new event
     event_data = {

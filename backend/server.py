@@ -88,10 +88,35 @@ class InventoryItem(BaseModel):
     quantity: int
     unit: str
     location: str
+    min_quantity: int = 0  # Alert quando sotto questa quantità
+    max_quantity: Optional[int] = None
     expiry_date: Optional[datetime] = None
     supplier: Optional[str] = None
+    cost_per_unit: Optional[float] = None
+    notes: Optional[str] = None
     created_at: datetime = Field(default_factory=datetime.now)
     updated_at: Optional[datetime] = None
+    last_updated_by: Optional[str] = None
+
+class InventoryUpdate(BaseModel):
+    quantity_change: int  # +/- per aumentare/diminuire
+    reason: str
+    location: Optional[str] = None
+
+class UserManagement(BaseModel):
+    username: str
+    email: str
+    password: Optional[str] = None
+    role: str
+    full_name: str
+    active: bool = True
+
+class UserUpdate(BaseModel):
+    email: Optional[str] = None
+    role: Optional[str] = None
+    full_name: Optional[str] = None
+    active: Optional[bool] = None
+    new_password: Optional[str] = None
 
 class OperationalLog(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))

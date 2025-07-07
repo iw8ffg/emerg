@@ -509,6 +509,30 @@ function App() {
     }
   }, [currentView]);
 
+  // Load users when accessing admin panel
+  const loadUsers = async () => {
+    if (!token || user.role !== 'admin') return;
+    
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/admin/users`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setUsers(data);
+      }
+    } catch (error) {
+      console.error('Failed to load users:', error);
+    }
+  };
+
+  useEffect(() => {
+    if (currentView === 'admin' && user && user.role === 'admin') {
+      loadUsers();
+    }
+  }, [currentView, user]);
+
   const getStatusColor = (status) => {
     switch (status) {
       case 'aperto': return 'bg-red-100 text-red-800';

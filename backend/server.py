@@ -496,22 +496,304 @@ def filter_data_by_date(data, start_date, end_date, date_field='created_at'):
     
     return filtered_data
 
-# Initialize admin user
+# Initialize admin user and database
 @app.on_event("startup")
 async def startup_event():
-    # Create admin user if not exists
-    admin_user = db.users.find_one({"username": "admin"})
-    if not admin_user:
-        admin_data = {
-            "username": "admin",
-            "email": "admin@emergency.local",
-            "password": hash_password("admin123"),
-            "role": "admin",
-            "full_name": "Amministratore Sistema",
-            "created_at": datetime.now()
-        }
-        db.users.insert_one(admin_data)
-        print("Admin user created: admin/admin123")
+    """Initialize database and create admin user on first startup"""
+    print("\n🚀 === AVVIO SISTEMA GESTIONE EMERGENZE ===")
+    
+    try:
+        # Test database connection
+        print("📊 Connessione al database MongoDB...")
+        db.command('ping')
+        print("✅ Connessione MongoDB stabilita con successo")
+        
+        # Initialize collections with indexes for better performance
+        print("🗂️ Inizializzazione collezioni database...")
+        
+        # Create indexes for better performance
+        try:
+            # Events collection indexes
+            db.events.create_index([("created_at", -1)])
+            db.events.create_index([("status", 1)])
+            db.events.create_index([("severity", 1)])
+            db.events.create_index([("event_type", 1)])
+            db.events.create_index([("latitude", 1), ("longitude", 1)])
+            
+            # Users collection indexes
+            db.users.create_index([("username", 1)], unique=True)
+            db.users.create_index([("email", 1)], unique=True)
+            db.users.create_index([("role", 1)])
+            
+            # Inventory collection indexes
+            db.inventory.create_index([("name", 1)])
+            db.inventory.create_index([("category", 1)])
+            db.inventory.create_index([("location", 1)])
+            db.inventory.create_index([("expiry_date", 1)])
+            
+            # Logs collection indexes
+            db.logs.create_index([("timestamp", -1)])
+            db.logs.create_index([("operator", 1)])
+            db.logs.create_index([("priority", 1)])
+            
+            # Resources collection indexes
+            db.resources.create_index([("full_name", 1)])
+            db.resources.create_index([("role", 1)])
+            db.resources.create_index([("availability", 1)])
+            
+            print("✅ Indici database creati con successo")
+        except Exception as e:
+            print(f"⚠️ Avviso indici database: {str(e)}")
+        
+        # Check and create admin user
+        print("👤 Verifica utente amministratore...")
+        admin_user = db.users.find_one({"username": "admin"})
+        
+        if not admin_user:
+            print("🔧 Creazione utente amministratore...")
+            admin_data = {
+                "username": "admin",
+                "email": "admin@emergency.local",
+                "password": hash_password("admin123"),
+                "role": "admin",
+                "full_name": "Amministratore Sistema",
+                "active": True,
+                "created_at": datetime.now(),
+                "created_by": "system"
+            }
+            db.users.insert_one(admin_data)
+            print("✅ Utente amministratore creato con successo!")
+            print("   📧 Username: admin")
+            print("   🔑 Password: admin123")
+            print("   🔐 Ruolo: Amministratore")
+        else:
+            print("✅ Utente amministratore già esistente")
+        
+        # Check if this is a fresh installation
+        total_users = db.users.count_documents({})
+        total_events = db.events.count_documents({})
+        total_inventory = db.inventory.count_documents({})
+        
+        is_fresh_install = total_users <= 1 and total_events == 0 and total_inventory == 0
+        
+        if is_fresh_install:
+            print("\n🆕 Prima installazione rilevata - Inizializzazione dati di esempio...")
+            
+            # Create sample users for testing
+            print("👥 Creazione utenti di esempio...")
+            sample_users = [
+                {
+                    "username": "coordinatore1",
+                    "email": "coordinatore@emergency.local",
+                    "password": hash_password("coord123"),
+                    "role": "coordinator",
+                    "full_name": "Mario Rossi",
+                    "active": True,
+                    "created_at": datetime.now(),
+                    "created_by": "system"
+                },
+                {
+                    "username": "operatore1",
+                    "email": "operatore@emergency.local", 
+                    "password": hash_password("oper123"),
+                    "role": "operator",
+                    "full_name": "Giulia Bianchi",
+                    "active": True,
+                    "created_at": datetime.now(),
+                    "created_by": "system"
+                },
+                {
+                    "username": "magazziniere1",
+                    "email": "magazzino@emergency.local",
+                    "password": hash_password("magaz123"),
+                    "role": "warehouse",
+                    "full_name": "Luca Verdi",
+                    "active": True,
+                    "created_at": datetime.now(),
+                    "created_by": "system"
+                }
+            ]
+            
+            for user_data in sample_users:
+                try:
+                    existing = db.users.find_one({"username": user_data["username"]})
+                    if not existing:
+                        db.users.insert_one(user_data)
+                        print(f"   ✅ Utente {user_data['username']} ({user_data['role']}) creato")
+                except Exception as e:
+                    print(f"   ⚠️ Errore creazione utente {user_data['username']}: {str(e)}")
+            
+            # Create sample inventory items
+            print("📦 Creazione articoli inventario di esempio...")
+            sample_inventory = [
+                {
+                    "id": str(uuid.uuid4()),
+                    "name": "Kit Pronto Soccorso Completo",
+                    "category": "medicinali",
+                    "quantity": 25,
+                    "unit": "pz",
+                    "location": "Magazzino Centrale - Scaffale A1",
+                    "min_quantity": 5,
+                    "max_quantity": 50,
+                    "expiry_date": datetime(2025, 12, 31),
+                    "supplier": "MedSupply Italia",
+                    "cost_per_unit": 45.50,
+                    "notes": "Kit completi per emergenze mediche",
+                    "created_at": datetime.now(),
+                    "last_updated_by": "system"
+                },
+                {
+                    "id": str(uuid.uuid4()),
+                    "name": "Estintore Portatile CO2",
+                    "category": "attrezzature",
+                    "quantity": 15,
+                    "unit": "pz",
+                    "location": "Magazzino Sicurezza - Zona B",
+                    "min_quantity": 3,
+                    "max_quantity": 30,
+                    "supplier": "SafeEquip Srl",
+                    "cost_per_unit": 85.00,
+                    "notes": "Estintori portatili per interventi rapidi",
+                    "created_at": datetime.now(),
+                    "last_updated_by": "system"
+                },
+                {
+                    "id": str(uuid.uuid4()),
+                    "name": "Coperte Termiche Emergency",
+                    "category": "vestiario",
+                    "quantity": 100,
+                    "unit": "pz",
+                    "location": "Magazzino Forniture - Scaffale C3",
+                    "min_quantity": 20,
+                    "max_quantity": 200,
+                    "supplier": "Emergency Supplies",
+                    "cost_per_unit": 3.50,
+                    "notes": "Coperte termiche per evacuazioni",
+                    "created_at": datetime.now(),
+                    "last_updated_by": "system"
+                },
+                {
+                    "id": str(uuid.uuid4()),
+                    "name": "Radio Portatile VHF",
+                    "category": "comunicazione",
+                    "quantity": 8,
+                    "unit": "pz",
+                    "location": "Magazzino Comunicazioni",
+                    "min_quantity": 2,
+                    "max_quantity": 15,
+                    "supplier": "RadioTech",
+                    "cost_per_unit": 120.00,
+                    "notes": "Radio per comunicazioni di emergenza",
+                    "created_at": datetime.now(),
+                    "last_updated_by": "system"
+                },
+                {
+                    "id": str(uuid.uuid4()),
+                    "name": "Acqua Potabile (Bottiglie 1.5L)",
+                    "category": "alimentari",
+                    "quantity": 200,
+                    "unit": "pz",
+                    "location": "Deposito Alimentari",
+                    "min_quantity": 50,
+                    "max_quantity": 500,
+                    "expiry_date": datetime(2025, 8, 15),
+                    "supplier": "AcquaPura Srl",
+                    "cost_per_unit": 0.80,
+                    "notes": "Scorte acqua per emergenze",
+                    "created_at": datetime.now(),
+                    "last_updated_by": "system"
+                }
+            ]
+            
+            for item in sample_inventory:
+                try:
+                    db.inventory.insert_one(item)
+                    print(f"   ✅ Articolo '{item['name']}' aggiunto all'inventario")
+                except Exception as e:
+                    print(f"   ⚠️ Errore creazione articolo: {str(e)}")
+            
+            # Create sample trained resources
+            print("👷 Creazione risorse formate di esempio...")
+            sample_resources = [
+                {
+                    "id": str(uuid.uuid4()),
+                    "full_name": "Dr. Anna Medicina",
+                    "role": "Medico di Emergenza",
+                    "specializations": ["Pronto Soccorso", "Traumatologia", "Rianimazione"],
+                    "contact_phone": "+39 338 1234567",
+                    "contact_email": "a.medicina@ospedale.it",
+                    "availability": "disponibile",
+                    "location": "Ospedale Centrale",
+                    "created_at": datetime.now()
+                },
+                {
+                    "id": str(uuid.uuid4()),
+                    "full_name": "Cap. Marco Protezione",
+                    "role": "Comandante Protezione Civile",
+                    "specializations": ["Coordinamento Emergenze", "Evacuazioni", "Logistica"],
+                    "contact_phone": "+39 347 9876543",
+                    "contact_email": "m.protezione@protciv.it",
+                    "availability": "disponibile",
+                    "location": "Centro Operativo",
+                    "created_at": datetime.now()
+                },
+                {
+                    "id": str(uuid.uuid4()),
+                    "full_name": "Ing. Sara Strutture",
+                    "role": "Ingegnere Strutturale",
+                    "specializations": ["Valutazione Danni", "Sicurezza Edifici", "Verifiche Strutturali"],
+                    "contact_phone": "+39 349 5551234",
+                    "contact_email": "s.strutture@studio.it",
+                    "availability": "disponibile",
+                    "location": "Studio Tecnico",
+                    "created_at": datetime.now()
+                }
+            ]
+            
+            for resource in sample_resources:
+                try:
+                    db.resources.insert_one(resource)
+                    print(f"   ✅ Risorsa '{resource['full_name']}' aggiunta")
+                except Exception as e:
+                    print(f"   ⚠️ Errore creazione risorsa: {str(e)}")
+            
+            # Create initial operational log
+            initial_log = {
+                "id": str(uuid.uuid4()),
+                "timestamp": datetime.now(),
+                "operator": "system",
+                "action": "Inizializzazione Sistema",
+                "details": "Sistema di gestione emergenze inizializzato con successo. Database configurato, utenti creati, inventario e risorse di esempio aggiunti.",
+                "priority": "normale"
+            }
+            db.logs.insert_one(initial_log)
+            print("✅ Log inizializzazione sistema creato")
+            
+            print("\n🎉 Inizializzazione completata con successo!")
+            print("\n📋 CREDENZIALI DI ACCESSO:")
+            print("   🔐 Amministratore: admin / admin123")
+            print("   🎯 Coordinatore: coordinatore1 / coord123")
+            print("   ⚙️ Operatore: operatore1 / oper123")
+            print("   📦 Magazziniere: magazziniere1 / magaz123")
+            
+        else:
+            print("✅ Sistema già configurato - Saltando inizializzazione dati esempio")
+        
+        # Final system status
+        print(f"\n📊 STATO SISTEMA:")
+        print(f"   👥 Utenti registrati: {db.users.count_documents({})}")
+        print(f"   🚨 Eventi di emergenza: {db.events.count_documents({})}")
+        print(f"   📦 Articoli inventario: {db.inventory.count_documents({})}")
+        print(f"   👷 Risorse formate: {db.resources.count_documents({})}")
+        print(f"   📝 Log operativi: {db.logs.count_documents({})}")
+        
+        print("\n✅ === SISTEMA GESTIONE EMERGENZE PRONTO ===")
+        print("🌐 Accedi all'interfaccia web per iniziare!")
+        
+    except Exception as e:
+        print(f"❌ Errore durante l'inizializzazione: {str(e)}")
+        print("⚠️ Il sistema potrebbe non funzionare correttamente")
+        raise e
 
 # Authentication endpoints
 @app.post("/api/auth/register")

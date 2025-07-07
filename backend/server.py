@@ -615,13 +615,156 @@ async def create_inventory_item(item: InventoryItem, current_user: dict = Depend
         raise HTTPException(status_code=403, detail="Permessi insufficienti")
     
     item_data = item.dict()
+    item_data["last_updated_by"] = current_user["username"]
     result = db.inventory.insert_one(item_data)
     return {"message": "Articolo creato con successo", "item_id": item.id}
 
 @app.get("/api/inventory")
-async def get_inventory(current_user: dict = Depends(get_current_user)):
-    items = list(db.inventory.find({}, {"_id": 0}).sort("name", 1))
+async def get_inventory(
+    category: Optional[str] = None,
+    location: Optional[str] = None,
+    low_stock: Optional[bool] = None,
+    expiring_soon: Optional[bool] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    query = {}
+    
+    if category:
+        query["category"] = category
+    if location:
+        query["location"] = location
+    if low_stock:
+        # Items below minimum quantity
+        query["$expr"] = {"$lt": ["$quantity", "$min_quantity"]}
+    
+    items = list(db.inventory.find(query, {"_id": 0}).sort("name", 1))
+    
+    # Filter expiring items if requested
+    if expiring_soon:
+        today = datetime.now()
+        thirty_days = today + timedelta(days=30)
+        items = [item for item in items if item.get('expiry_date') and 
+                datetime.fromisoformat(item['expiry_date'].replace('Z', '')) <= thirty_days]
+    
     return items
+
+@app.get("/api/inventory/{item_id}")
+async def get_inventory_item(item_id: str, current_user: dict = Depends(get_current_user)):
+    item = db.inventory.find_one({"id": item_id}, {"_id": 0})
+    if not item:
+        raise HTTPException(status_code=404, detail="Articolo non trovato")
+    return item
+
+@app.put("/api/inventory/{item_id}")
+async def update_inventory_item(item_id: str, item: InventoryItem, current_user: dict = Depends(get_current_user)):
+    # Check permissions
+    if current_user["role"] not in ["admin", "coordinator", "warehouse"]:
+        raise HTTPException(status_code=403, detail="Permessi insufficienti")
+    
+    item_data = item.dict()
+    item_data["updated_at"] = datetime.now()
+    item_data["last_updated_by"] = current_user["username"]
+    
+    result = db.inventory.update_one({"id": item_id}, {"$set": item_data})
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Articolo non trovato")
+    
+    return {"message": "Articolo aggiornato con successo"}
+
+@app.delete("/api/inventory/{item_id}")
+async def delete_inventory_item(item_id: str, current_user: dict = Depends(get_current_user)):
+    # Check permissions
+    if current_user["role"] not in ["admin", "coordinator"]:
+        raise HTTPException(status_code=403, detail="Permessi insufficienti")
+    
+    result = db.inventory.delete_one({"id": item_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Articolo non trovato")
+    
+    return {"message": "Articolo eliminato con successo"}
+
+@app.post("/api/inventory/{item_id}/update-quantity")
+async def update_inventory_quantity(item_id: str, update: InventoryUpdate, current_user: dict = Depends(get_current_user)):
+    # Check permissions
+    if current_user["role"] not in ["admin", "coordinator", "warehouse"]:
+        raise HTTPException(status_code=403, detail="Permessi insufficienti")
+    
+    # Get current item
+    item = db.inventory.find_one({"id": item_id})
+    if not item:
+        raise HTTPException(status_code=404, detail="Articolo non trovato")
+    
+    # Calculate new quantity
+    new_quantity = item["quantity"] + update.quantity_change
+    if new_quantity < 0:
+        raise HTTPException(status_code=400, detail="La quantità non può essere negativa")
+    
+    # Update item
+    update_data = {
+        "quantity": new_quantity,
+        "updated_at": datetime.now(),
+        "last_updated_by": current_user["username"]
+    }
+    
+    if update.location:
+        update_data["location"] = update.location
+    
+    db.inventory.update_one({"id": item_id}, {"$set": update_data})
+    
+    # Log the change
+    log_data = {
+        "id": str(uuid.uuid4()),
+        "timestamp": datetime.now(),
+        "operator": current_user["username"],
+        "action": f"Aggiornamento inventario: {item['name']}",
+        "details": f"{update.reason}. Quantità: {item['quantity']} → {new_quantity} ({'+' if update.quantity_change > 0 else ''}{update.quantity_change})",
+        "priority": "normale"
+    }
+    db.logs.insert_one(log_data)
+    
+    return {"message": "Quantità aggiornata con successo", "new_quantity": new_quantity}
+
+@app.get("/api/inventory/categories")
+async def get_inventory_categories(current_user: dict = Depends(get_current_user)):
+    categories = db.inventory.distinct("category")
+    return {"categories": categories}
+
+@app.get("/api/inventory/locations")
+async def get_inventory_locations(current_user: dict = Depends(get_current_user)):
+    locations = db.inventory.distinct("location")
+    return {"locations": locations}
+
+@app.get("/api/inventory/alerts")
+async def get_inventory_alerts(current_user: dict = Depends(get_current_user)):
+    # Get low stock items
+    low_stock_items = list(db.inventory.find({
+        "$expr": {"$lt": ["$quantity", "$min_quantity"]}
+    }, {"_id": 0}))
+    
+    # Get expiring items (next 30 days)
+    today = datetime.now()
+    thirty_days_from_now = today + timedelta(days=30)
+    
+    expiring_items = []
+    all_items = list(db.inventory.find({"expiry_date": {"$exists": True, "$ne": None}}, {"_id": 0}))
+    
+    for item in all_items:
+        expiry_date = item.get('expiry_date')
+        if expiry_date:
+            if isinstance(expiry_date, str):
+                try:
+                    expiry_date = datetime.fromisoformat(expiry_date.replace('Z', ''))
+                except:
+                    continue
+            
+            if expiry_date <= thirty_days_from_now:
+                expiring_items.append(item)
+    
+    return {
+        "low_stock_items": low_stock_items,
+        "expiring_items": expiring_items,
+        "total_alerts": len(low_stock_items) + len(expiring_items)
+    }
 
 # Operational Log endpoints
 @app.post("/api/logs")

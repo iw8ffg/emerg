@@ -360,6 +360,236 @@ class EmergencySystemAPITester:
                 self.created_logs.append(log_id)
             return log_id
         return None
+        
+    # Inventory Management Tests
+    def test_get_inventory(self, params=None):
+        """Test getting inventory items with optional filters"""
+        endpoint = "inventory"
+        if params:
+            query_params = "&".join([f"{k}={v}" for k, v in params.items()])
+            endpoint = f"inventory?{query_params}"
+            
+        success, response = self.run_test(
+            f"Get inventory items {params if params else ''}",
+            "GET",
+            endpoint,
+            200
+        )
+        if success:
+            print(f"Retrieved {len(response)} inventory items")
+            if len(response) > 0:
+                print(f"First item: {json.dumps(response[0], indent=2)}")
+            return response
+        return []
+    
+    def test_create_inventory_item(self, item_data):
+        """Test creating a new inventory item"""
+        success, response = self.run_test(
+            "Create new inventory item",
+            "POST",
+            "inventory",
+            200,
+            data=item_data
+        )
+        if success:
+            print(f"Inventory item created: {json.dumps(response, indent=2)}")
+            item_id = response.get('item_id')
+            if item_id:
+                self.created_inventory_items.append(item_id)
+            return item_id
+        return None
+    
+    def test_get_inventory_item(self, item_id):
+        """Test getting a specific inventory item"""
+        success, response = self.run_test(
+            f"Get inventory item {item_id}",
+            "GET",
+            f"inventory/{item_id}",
+            200
+        )
+        if success:
+            print(f"Retrieved inventory item: {json.dumps(response, indent=2)}")
+            return response
+        return None
+    
+    def test_update_inventory_item(self, item_id, item_data):
+        """Test updating an inventory item"""
+        success, response = self.run_test(
+            f"Update inventory item {item_id}",
+            "PUT",
+            f"inventory/{item_id}",
+            200,
+            data=item_data
+        )
+        if success:
+            print(f"Inventory item updated: {json.dumps(response, indent=2)}")
+            return True
+        return False
+    
+    def test_delete_inventory_item(self, item_id):
+        """Test deleting an inventory item"""
+        success, response = self.run_test(
+            f"Delete inventory item {item_id}",
+            "DELETE",
+            f"inventory/{item_id}",
+            200
+        )
+        if success:
+            print(f"Inventory item deleted: {json.dumps(response, indent=2)}")
+            if item_id in self.created_inventory_items:
+                self.created_inventory_items.remove(item_id)
+            return True
+        return False
+    
+    def test_update_inventory_quantity(self, item_id, quantity_change, reason, location=None):
+        """Test updating inventory quantity"""
+        data = {
+            "quantity_change": quantity_change,
+            "reason": reason
+        }
+        if location:
+            data["location"] = location
+            
+        success, response = self.run_test(
+            f"Update inventory quantity for item {item_id}",
+            "POST",
+            f"inventory/{item_id}/update-quantity",
+            200,
+            data=data
+        )
+        if success:
+            print(f"Inventory quantity updated: {json.dumps(response, indent=2)}")
+            return response.get('new_quantity')
+        return None
+    
+    def test_get_inventory_categories(self):
+        """Test getting inventory categories"""
+        success, response = self.run_test(
+            "Get inventory categories",
+            "GET",
+            "inventory/categories",
+            200
+        )
+        if success:
+            print(f"Retrieved categories: {json.dumps(response, indent=2)}")
+            return response.get('categories', [])
+        return []
+    
+    def test_get_inventory_locations(self):
+        """Test getting inventory locations"""
+        success, response = self.run_test(
+            "Get inventory locations",
+            "GET",
+            "inventory/locations",
+            200
+        )
+        if success:
+            print(f"Retrieved locations: {json.dumps(response, indent=2)}")
+            return response.get('locations', [])
+        return []
+    
+    def test_get_inventory_alerts(self):
+        """Test getting inventory alerts"""
+        success, response = self.run_test(
+            "Get inventory alerts",
+            "GET",
+            "inventory/alerts",
+            200
+        )
+        if success:
+            print(f"Retrieved alerts: {json.dumps(response, indent=2)}")
+            print(f"Low stock items: {len(response.get('low_stock_items', []))}")
+            print(f"Expiring items: {len(response.get('expiring_items', []))}")
+            print(f"Total alerts: {response.get('total_alerts', 0)}")
+            return response
+        return {}
+    
+    # User Management Tests
+    def test_get_admin_users(self):
+        """Test getting all users (admin only)"""
+        success, response = self.run_test(
+            "Get all users (admin only)",
+            "GET",
+            "admin/users",
+            200
+        )
+        if success:
+            print(f"Retrieved {len(response)} users")
+            if len(response) > 0:
+                print(f"First user: {json.dumps(response[0], indent=2)}")
+            return response
+        return []
+    
+    def test_create_user(self, user_data):
+        """Test creating a new user (admin only)"""
+        success, response = self.run_test(
+            "Create new user (admin only)",
+            "POST",
+            "admin/users",
+            200,
+            data=user_data
+        )
+        if success:
+            print(f"User created: {json.dumps(response, indent=2)}")
+            if user_data.get('username'):
+                self.created_users.append(user_data['username'])
+            return True
+        return False
+    
+    def test_update_user(self, username, user_data):
+        """Test updating a user (admin only)"""
+        success, response = self.run_test(
+            f"Update user {username} (admin only)",
+            "PUT",
+            f"admin/users/{username}",
+            200,
+            data=user_data
+        )
+        if success:
+            print(f"User updated: {json.dumps(response, indent=2)}")
+            return True
+        return False
+    
+    def test_delete_user(self, username):
+        """Test deleting a user (admin only)"""
+        success, response = self.run_test(
+            f"Delete user {username} (admin only)",
+            "DELETE",
+            f"admin/users/{username}",
+            200
+        )
+        if success:
+            print(f"User deleted: {json.dumps(response, indent=2)}")
+            if username in self.created_users:
+                self.created_users.remove(username)
+            return True
+        return False
+    
+    def test_reset_user_password(self, username):
+        """Test resetting a user's password (admin only)"""
+        success, response = self.run_test(
+            f"Reset password for user {username} (admin only)",
+            "POST",
+            f"admin/users/{username}/reset-password",
+            200
+        )
+        if success:
+            print(f"Password reset: {json.dumps(response, indent=2)}")
+            return response.get('message')
+        return None
+    
+    def test_get_admin_stats(self):
+        """Test getting admin statistics (admin only)"""
+        success, response = self.run_test(
+            "Get admin statistics (admin only)",
+            "GET",
+            "admin/stats",
+            200
+        )
+        if success:
+            print(f"Admin stats: {json.dumps(response, indent=2)}")
+            return response
+        return {}
 
 def main():
     # Setup

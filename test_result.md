@@ -234,6 +234,7 @@ test_plan:
     - "Event Types Endpoints"
     - "Inventory Categories Endpoints"
     - "Default Categories Initialization"
+    - "Inventory category management functionality"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"

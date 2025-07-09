@@ -142,7 +142,7 @@ frontend:
     file: "/app/frontend/src/App.js"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: false
         agent: "main"
@@ -150,6 +150,9 @@ frontend:
       - working: true
         agent: "main"
         comment: "Successfully implemented Events dropdown menu with all three options and proper navigation"
+      - working: true
+        agent: "testing"
+        comment: "Verified Events dropdown menu functionality. All three options (Eventi di Emergenza, Nuovo Evento, Mappa Eventi) work correctly. Dropdown opens and closes properly, including when clicking outside. Navigation to respective views works as expected."
         
   - task: "Dynamic permission management UI"
     implemented: true
@@ -157,7 +160,7 @@ frontend:
     file: "/app/frontend/src/App.js"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: false
         agent: "main"
@@ -165,6 +168,9 @@ frontend:
       - working: true
         agent: "main"
         comment: "Successfully implemented permissions management modal with role selection and permission editing"
+      - working: true
+        agent: "testing"
+        comment: "Verified permissions management UI functionality. Modal opens correctly, displays available roles (admin, coordinator, operator, warehouse, viewer). Role selection works properly, showing current permissions. Permission checkboxes can be toggled and saved successfully. Modal can be closed using X button or after saving."
         
   - task: "Event modification functionality"
     implemented: true
@@ -172,7 +178,7 @@ frontend:
     file: "/app/frontend/src/App.js"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: false
         agent: "main"
@@ -180,6 +186,9 @@ frontend:
       - working: true
         agent: "main"
         comment: "Successfully implemented event editing with edit buttons, form pre-population, and update functionality"
+      - working: true
+        agent: "testing"
+        comment: "Verified event modification functionality. Edit buttons appear for each event in the list. Clicking edit opens a form pre-populated with event data. Form fields can be modified, including title, description, and other properties. Cancel button returns to event list without saving. There was a minor issue with dropdown selection in the form, but it doesn't prevent the core functionality from working."
 
 metadata:
   created_by: "main_agent"

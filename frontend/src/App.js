@@ -563,6 +563,207 @@ function App() {
     }
   };
 
+  // Categories management functions
+  const loadEventTypes = async () => {
+    if (!token) return;
+    
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/event-types`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setEventTypes(data);
+      }
+    } catch (error) {
+      console.error('Failed to load event types:', error);
+    }
+  };
+
+  const loadInventoryCategories = async () => {
+    if (!token) return;
+    
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/inventory-categories`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setInventoryCategories(data);
+      }
+    } catch (error) {
+      console.error('Failed to load inventory categories:', error);
+    }
+  };
+
+  const createEventType = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+    
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/event-types`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify(eventTypeForm)
+      });
+      
+      if (response.ok) {
+        setSuccess('Tipo di evento creato con successo!');
+        setEventTypeForm({ name: '', description: '' });
+        setShowAddEventType(false);
+        loadEventTypes();
+      } else {
+        const data = await response.json();
+        setError(data.detail || 'Errore durante la creazione del tipo di evento');
+      }
+    } catch (error) {
+      setError('Errore di connessione al server');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const updateEventType = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+    
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/event-types/${editingEventType.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify(eventTypeForm)
+      });
+      
+      if (response.ok) {
+        setSuccess('Tipo di evento aggiornato con successo!');
+        setEventTypeForm({ name: '', description: '' });
+        setEditingEventType(null);
+        loadEventTypes();
+      } else {
+        const data = await response.json();
+        setError(data.detail || 'Errore durante l\'aggiornamento del tipo di evento');
+      }
+    } catch (error) {
+      setError('Errore di connessione al server');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const deleteEventType = async (eventTypeId) => {
+    if (!confirm('Sei sicuro di voler eliminare questo tipo di evento?')) return;
+    
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/event-types/${eventTypeId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      if (response.ok) {
+        setSuccess('Tipo di evento eliminato con successo!');
+        loadEventTypes();
+      } else {
+        const data = await response.json();
+        setError(data.detail || 'Errore durante l\'eliminazione del tipo di evento');
+      }
+    } catch (error) {
+      setError('Errore di connessione al server');
+    }
+  };
+
+  const createInventoryCategory = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+    
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/inventory-categories`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify(inventoryCategoryForm)
+      });
+      
+      if (response.ok) {
+        setSuccess('Categoria inventario creata con successo!');
+        setInventoryCategoryForm({ name: '', description: '', icon: '' });
+        setShowAddInventoryCategory(false);
+        loadInventoryCategories();
+      } else {
+        const data = await response.json();
+        setError(data.detail || 'Errore durante la creazione della categoria');
+      }
+    } catch (error) {
+      setError('Errore di connessione al server');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const updateInventoryCategory = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+    
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/inventory-categories/${editingInventoryCategory.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify(inventoryCategoryForm)
+      });
+      
+      if (response.ok) {
+        setSuccess('Categoria inventario aggiornata con successo!');
+        setInventoryCategoryForm({ name: '', description: '', icon: '' });
+        setEditingInventoryCategory(null);
+        loadInventoryCategories();
+      } else {
+        const data = await response.json();
+        setError(data.detail || 'Errore durante l\'aggiornamento della categoria');
+      }
+    } catch (error) {
+      setError('Errore di connessione al server');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const deleteInventoryCategory = async (categoryId) => {
+    if (!confirm('Sei sicuro di voler eliminare questa categoria?')) return;
+    
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/inventory-categories/${categoryId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      if (response.ok) {
+        setSuccess('Categoria eliminata con successo!');
+        loadInventoryCategories();
+      } else {
+        const data = await response.json();
+        setError(data.detail || 'Errore durante l\'eliminazione della categoria');
+      }
+    } catch (error) {
+      setError('Errore di connessione al server');
+    }
+  };
+
   const createLog = async (e) => {
     e.preventDefault();
     setLoading(true);

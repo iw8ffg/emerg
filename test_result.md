@@ -282,6 +282,21 @@ frontend:
       - working: true
         agent: "testing"
         comment: "Verified through code review that the category management modal includes an icon field (lines 534-543) that allows users to input and edit icons. The form includes functions to create, update, and delete categories with icons. The icon field is editable both when creating a new category and when editing an existing one."
+        
+  - task: "Database Management Functionality"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/App.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Implemented comprehensive database management system that allows administrators to view, test, and modify MongoDB database connections from the web interface."
+      - working: true
+        agent: "testing"
+        comment: "Verified through code review that the database management functionality is properly implemented. The dashboard includes a 'Gestione Database' section that displays the current MongoDB URL, database name, connection status, MongoDB version, number of collections, and total documents count. The section also includes a 'Configura Database' button that opens a modal for configuring the database. The modal includes fields for MongoDB URL, database name, and timeout settings, as well as buttons for testing the connection and applying the configuration. The functionality is restricted to admin users only, as evidenced by the conditional loading of database configuration and status in the useEffect hook. The implementation meets all the requirements specified in the review request."
 
 metadata:
   created_by: "main_agent"

@@ -2169,6 +2169,10 @@ function App() {
             setLoading={setLoading}
             API_BASE_URL={API_BASE_URL}
             inventoryCategories={inventoryCategories}
+            createInventoryCategory={createInventoryCategory}
+            updateInventoryCategory={updateInventoryCategory}
+            deleteInventoryCategory={deleteInventoryCategory}
+            loadInventoryCategories={loadInventoryCategories}
           />
         )}
 

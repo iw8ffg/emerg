@@ -823,6 +823,124 @@ function App() {
     }
   };
 
+  // Database management functions
+  const loadDatabaseConfig = async () => {
+    if (!token || user?.role !== 'admin') return;
+    
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/admin/database/config`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setDatabaseConfig({
+          mongo_url: data.mongo_url,
+          database_name: data.database_name,
+          connection_timeout: 5000,
+          server_selection_timeout: 5000
+        });
+      }
+    } catch (error) {
+      console.error('Failed to load database config:', error);
+    }
+  };
+
+  const loadDatabaseStatus = async () => {
+    if (!token || user?.role !== 'admin') return;
+    
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/admin/database/status`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setDatabaseStatus(data);
+      }
+    } catch (error) {
+      console.error('Failed to load database status:', error);
+    }
+  };
+
+  const testDatabaseConnection = async () => {
+    setTestingConnection(true);
+    setError('');
+    
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/admin/database/test`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify(databaseConfig)
+      });
+      
+      const data = await response.json();
+      
+      if (response.ok) {
+        if (data.status === 'success') {
+          setSuccess(`Test connessione riuscito: ${data.message}`);
+        } else {
+          setError(`Test connessione fallito: ${data.message}`);
+        }
+      } else {
+        setError(data.detail || 'Errore durante il test della connessione');
+      }
+    } catch (error) {
+      setError('Errore di connessione al server');
+    } finally {
+      setTestingConnection(false);
+    }
+  };
+
+  const updateDatabaseConfig = async () => {
+    if (!confirm('Sei sicuro di voler cambiare la configurazione del database? Questa operazione potrebbe interrompere il servizio.')) return;
+    
+    setUpdatingDatabase(true);
+    setError('');
+    
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/admin/database/update`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          ...databaseConfig,
+          test_connection: true,
+          create_if_not_exists: true
+        })
+      });
+      
+      const data = await response.json();
+      
+      if (response.ok) {
+        if (data.status === 'success') {
+          setSuccess(`Database aggiornato con successo: ${data.message}`);
+          if (data.created_new) {
+            setSuccess(`Nuovo database creato e inizializzato. Credenziali admin di default create.`);
+          }
+          setShowDatabaseConfig(false);
+          loadDatabaseConfig();
+          loadDatabaseStatus();
+          // Ricarica i dati del dashboard dal nuovo database
+          loadDashboardData();
+        } else {
+          setError(`Errore aggiornamento database: ${data.message}`);
+        }
+      } else {
+        setError(data.detail || 'Errore durante l\'aggiornamento del database');
+      }
+    } catch (error) {
+      setError('Errore di connessione al server');
+    } finally {
+      setUpdatingDatabase(false);
+    }
+  };
+
   const createLog = async (e) => {
     e.preventDefault();
     setLoading(true);

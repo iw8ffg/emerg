@@ -155,6 +155,18 @@ backend:
       - working: true
         agent: "testing"
         comment: "Verified that default event types and inventory categories are created on startup. Default event types include: incendio, terremoto, alluvione, etc. Default inventory categories include: medicinali, attrezzature, vestiario, etc. All categories have proper structure with name, description, icon, and is_default flag."
+        
+  - task: "Database Management Endpoints"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "Tested all database management endpoints. GET /api/admin/database/config returns the current database configuration correctly. POST /api/admin/database/test successfully tests database connections with both valid and invalid configurations. GET /api/admin/database/status returns detailed database statistics including server version, uptime, and collection counts. POST /api/admin/database/update successfully switches to a new database and creates it if it doesn't exist. All endpoints properly enforce admin-only access restrictions."
 
 frontend:
   - task: "Events dropdown menu"

@@ -990,6 +990,56 @@ async def get_inventory(
                 datetime.fromisoformat(item['expiry_date'].replace('Z', '')) <= thirty_days]
     
     return items
+@app.get("/api/inventory/alerts")
+async def get_inventory_alerts(current_user: dict = Depends(get_current_user)):
+    try:
+        # Get low stock items
+        low_stock_items = list(db.inventory.find({
+            "$expr": {"$lte": ["$quantity", "$min_quantity"]}
+        }, {"_id": 0}))
+        
+        # Get expiring items (next 30 days)
+        today = datetime.now()
+        thirty_days_from_now = today + timedelta(days=30)
+        
+        expiring_items = []
+        all_items = list(db.inventory.find({"expiry_date": {"$exists": True, "$ne": None}}, {"_id": 0}))
+        
+        for item in all_items:
+            expiry_date = item.get('expiry_date')
+            if expiry_date:
+                try:
+                    if isinstance(expiry_date, str):
+                        expiry_date = datetime.fromisoformat(expiry_date.replace('Z', ''))
+                    elif isinstance(expiry_date, datetime):
+                        pass  # Already datetime object
+                    else:
+                        continue
+                    
+                    if expiry_date <= thirty_days_from_now:
+                        expiring_items.append(item)
+                except:
+                    continue
+        
+        return {
+            "low_stock_items": low_stock_items,
+            "expiring_items": expiring_items,
+            "total_alerts": len(low_stock_items) + len(expiring_items)
+        }
+    except Exception as e:
+        return {
+            "low_stock_items": [],
+            "expiring_items": [],
+            "total_alerts": 0,
+            "error": str(e)
+        }
+
+@app.get("/api/inventory/{item_id}")
+async def get_inventory_item(item_id: str, current_user: dict = Depends(get_current_user)):
+    item = db.inventory.find_one({"id": item_id}, {"_id": 0})
+    if not item:
+        raise HTTPException(status_code=404, detail="Articolo non trovato")
+    return item
 
 
 

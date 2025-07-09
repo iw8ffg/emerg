@@ -197,6 +197,31 @@ class EventUpdate(BaseModel):
     resources_needed: Optional[List[str]] = None
     notes: Optional[str] = None
 
+class EventType(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    name: str
+    description: Optional[str] = None
+    is_default: bool = False
+    created_at: datetime = Field(default_factory=datetime.now)
+    created_by: str
+
+class EventTypeCreate(BaseModel):
+    name: str
+    description: Optional[str] = None
+
+class InventoryCategory(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    name: str
+    description: Optional[str] = None
+    icon: Optional[str] = None
+    created_at: datetime = Field(default_factory=datetime.now)
+    created_by: str
+
+class InventoryCategoryCreate(BaseModel):
+    name: str
+    description: Optional[str] = None
+    icon: Optional[str] = None
+
 class OperationalLog(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     timestamp: datetime = Field(default_factory=datetime.now)

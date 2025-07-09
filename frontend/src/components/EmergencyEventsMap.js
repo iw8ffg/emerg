@@ -42,7 +42,8 @@ const EmergencyEventsMap = ({
   token, 
   setError, 
   setSuccess, 
-  API_BASE_URL 
+  API_BASE_URL,
+  eventTypes = []
 }) => {
   const [mapEvents, setMapEvents] = useState([]);
   const [loading, setLoading] = useState(false);

@@ -820,50 +820,13 @@ def main():
         print("❌ System health check failed")
         return 1
     
-    # Try to register a new admin user for testing
-    print("\n--- Registering Test Admin User ---")
-    admin_username = "testadmin"
-    admin_password = "testadmin123"
-    
-    register_data = {
-        "username": admin_username,
-        "email": "testadmin@example.com",
-        "password": admin_password,
-        "role": "admin",
-        "full_name": "Test Administrator"
-    }
-    
-    success, response = tester.run_test(
-        "Register test admin user",
-        "POST",
-        "auth/register",
-        200,
-        data=register_data
-    )
-    
-    # If registration fails, try with the default admin credentials
-    if not success:
-        print("⚠️ Failed to register new admin user, will try with default credentials")
-        admin_username = "admin"
-        admin_password = "admin123"
-    else:
-        print("✅ Successfully registered new admin user")
-    
-    # Test login with admin credentials
+    # Try to login with the testadmin user we created earlier
     print("\n--- Testing Admin Login ---")
-    if not tester.test_login(admin_username, admin_password):
-        print("❌ Login with admin credentials failed")
-        
-        # Try with the default admin credentials as fallback
-        if admin_username != "admin":
-            print("Trying with default admin credentials...")
-            if not tester.test_login("admin", "admin123"):
-                print("❌ Login with default admin credentials also failed")
-                return 1
-        else:
-            return 1
+    if not tester.test_login("testadmin", "testadmin123"):
+        print("❌ Login with testadmin credentials failed")
+        return 1
     else:
-        print(f"✅ Successfully logged in with admin credentials ({admin_username})")
+        print("✅ Successfully logged in with testadmin credentials")
     
     # Test getting current user info to verify admin role
     print("\n--- Verifying Admin User Role ---")

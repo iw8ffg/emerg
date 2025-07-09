@@ -1081,7 +1081,7 @@ async def get_inventory_locations(current_user: dict = Depends(get_current_user)
 async def get_inventory_alerts(current_user: dict = Depends(get_current_user)):
     # Get low stock items
     low_stock_items = list(db.inventory.find({
-        "$expr": {"$lt": ["$quantity", "$min_quantity"]}
+        "$expr": {"$lte": ["$quantity", "$min_quantity"]}
     }, {"_id": 0}))
     
     # Get expiring items (next 30 days)
@@ -1094,14 +1094,18 @@ async def get_inventory_alerts(current_user: dict = Depends(get_current_user)):
     for item in all_items:
         expiry_date = item.get('expiry_date')
         if expiry_date:
-            if isinstance(expiry_date, str):
-                try:
+            try:
+                if isinstance(expiry_date, str):
                     expiry_date = datetime.fromisoformat(expiry_date.replace('Z', ''))
-                except:
+                elif isinstance(expiry_date, datetime):
+                    pass  # Already datetime object
+                else:
                     continue
-            
-            if expiry_date <= thirty_days_from_now:
-                expiring_items.append(item)
+                
+                if expiry_date <= thirty_days_from_now:
+                    expiring_items.append(item)
+            except:
+                continue
     
     return {
         "low_stock_items": low_stock_items,

@@ -167,6 +167,9 @@ backend:
       - working: true
         agent: "testing"
         comment: "Tested all database management endpoints. GET /api/admin/database/config returns the current database configuration correctly. POST /api/admin/database/test successfully tests database connections with both valid and invalid configurations. GET /api/admin/database/status returns detailed database statistics including server version, uptime, and collection counts. POST /api/admin/database/update successfully switches to a new database and creates it if it doesn't exist. All endpoints properly enforce admin-only access restrictions."
+      - working: true
+        agent: "testing"
+        comment: "Conducted comprehensive testing of the database management module. The issue with database switching is not a bug but an expected behavior: when switching databases, the authentication token becomes invalid because user information is stored in the database. After switching databases, users need to re-authenticate with credentials valid in the new database. The frontend should handle this by prompting for re-authentication after a successful database switch. All database management endpoints are working correctly, including GET /api/admin/database/config, GET /api/admin/database/status, POST /api/admin/database/test, and POST /api/admin/database/update. Access control is properly enforced, with non-admin users receiving 403 Forbidden responses when attempting to access these endpoints."
 
 frontend:
   - task: "Events dropdown menu"

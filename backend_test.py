@@ -740,6 +740,211 @@ class EmergencySystemAPITester:
         # All tests should fail with 403 for non-admin users
         return get_all_success and get_role_success and update_success
     
+    # Event Types Management Tests
+    def test_get_event_types(self):
+        """Test getting all event types"""
+        success, response = self.run_test(
+            "Get all event types",
+            "GET",
+            "event-types",
+            200
+        )
+        if success:
+            print(f"Retrieved {len(response)} event types")
+            if len(response) > 0:
+                print(f"First event type: {json.dumps(response[0], indent=2)}")
+            return response
+        return None
+    
+    def test_create_event_type(self, event_type_data):
+        """Test creating a new event type (admin/coordinator only)"""
+        success, response = self.run_test(
+            "Create new event type",
+            "POST",
+            "event-types",
+            200,
+            data=event_type_data
+        )
+        if success:
+            print(f"Event type created: {json.dumps(response, indent=2)}")
+            event_type_id = response.get('event_type', {}).get('id')
+            return event_type_id
+        return None
+    
+    def test_update_event_type(self, event_type_id, event_type_data):
+        """Test updating an event type (admin/coordinator only)"""
+        success, response = self.run_test(
+            f"Update event type {event_type_id}",
+            "PUT",
+            f"event-types/{event_type_id}",
+            200,
+            data=event_type_data
+        )
+        if success:
+            print(f"Event type updated: {json.dumps(response, indent=2)}")
+            return True
+        return False
+    
+    def test_delete_event_type(self, event_type_id):
+        """Test deleting a custom event type (admin/coordinator only)"""
+        success, response = self.run_test(
+            f"Delete event type {event_type_id}",
+            "DELETE",
+            f"event-types/{event_type_id}",
+            200
+        )
+        if success:
+            print(f"Event type deleted: {json.dumps(response, indent=2)}")
+            return True
+        return False
+    
+    def test_delete_default_event_type(self, event_type_id):
+        """Test deleting a default event type (should fail)"""
+        success, response = self.run_test(
+            f"Delete default event type {event_type_id}",
+            "DELETE",
+            f"event-types/{event_type_id}",
+            400  # Expecting bad request
+        )
+        # This test passes if we get a 400 error (can't delete default)
+        return success
+    
+    def test_event_types_with_non_authorized(self, username, password, event_type_data):
+        """Test event type management with non-authorized user (should fail)"""
+        # Save current token
+        original_token = self.token
+        
+        # Login with non-authorized user
+        print(f"\n🔍 Testing event type management with non-authorized user '{username}'...")
+        success, response = self.run_test(
+            f"Login with user '{username}'",
+            "POST",
+            "auth/login",
+            200,
+            data={"username": username, "password": password}
+        )
+        
+        if not success:
+            print(f"❌ Failed to login with user '{username}'")
+            self.token = original_token
+            return False
+            
+        non_auth_token = response['access_token']
+        self.token = non_auth_token
+        
+        # Try to create event type
+        create_success, _ = self.run_test(
+            "Create event type with non-authorized user (should fail)",
+            "POST",
+            "event-types",
+            403,  # Expecting forbidden
+            data=event_type_data
+        )
+        
+        # Restore original token
+        self.token = original_token
+        
+        # Test passes if create fails with 403
+        return create_success
+    
+    # Inventory Categories Management Tests
+    def test_get_inventory_categories_full(self):
+        """Test getting all inventory categories (full details)"""
+        success, response = self.run_test(
+            "Get all inventory categories",
+            "GET",
+            "inventory-categories",
+            200
+        )
+        if success:
+            print(f"Retrieved {len(response)} inventory categories")
+            if len(response) > 0:
+                print(f"First category: {json.dumps(response[0], indent=2)}")
+            return response
+        return None
+    
+    def test_create_inventory_category(self, category_data):
+        """Test creating a new inventory category (admin only)"""
+        success, response = self.run_test(
+            "Create new inventory category",
+            "POST",
+            "inventory-categories",
+            200,
+            data=category_data
+        )
+        if success:
+            print(f"Inventory category created: {json.dumps(response, indent=2)}")
+            category_id = response.get('message', {}).get('id')
+            if not category_id:
+                category_id = response.get('category', {}).get('id')
+            return category_id
+        return None
+    
+    def test_update_inventory_category(self, category_id, category_data):
+        """Test updating an inventory category (admin only)"""
+        success, response = self.run_test(
+            f"Update inventory category {category_id}",
+            "PUT",
+            f"inventory-categories/{category_id}",
+            200,
+            data=category_data
+        )
+        if success:
+            print(f"Inventory category updated: {json.dumps(response, indent=2)}")
+            return True
+        return False
+    
+    def test_delete_inventory_category(self, category_id):
+        """Test deleting an inventory category (admin only)"""
+        success, response = self.run_test(
+            f"Delete inventory category {category_id}",
+            "DELETE",
+            f"inventory-categories/{category_id}",
+            200
+        )
+        if success:
+            print(f"Inventory category deleted: {json.dumps(response, indent=2)}")
+            return True
+        return False
+    
+    def test_inventory_categories_with_non_admin(self, username, password, category_data):
+        """Test inventory category management with non-admin user (should fail)"""
+        # Save current token
+        original_token = self.token
+        
+        # Login with non-admin user
+        print(f"\n🔍 Testing inventory category management with non-admin user '{username}'...")
+        success, response = self.run_test(
+            f"Login with user '{username}'",
+            "POST",
+            "auth/login",
+            200,
+            data={"username": username, "password": password}
+        )
+        
+        if not success:
+            print(f"❌ Failed to login with user '{username}'")
+            self.token = original_token
+            return False
+            
+        non_admin_token = response['access_token']
+        self.token = non_admin_token
+        
+        # Try to create inventory category
+        create_success, _ = self.run_test(
+            "Create inventory category with non-admin user (should fail)",
+            "POST",
+            "inventory-categories",
+            403,  # Expecting forbidden
+            data=category_data
+        )
+        
+        # Restore original token
+        self.token = original_token
+        
+        # Test passes if create fails with 403
+        return create_success
+    
     # Event Management Tests
     def test_update_event(self, event_id, event_data):
         """Test updating an emergency event"""

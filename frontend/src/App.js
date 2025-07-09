@@ -117,6 +117,12 @@ function App() {
   const [permissions, setPermissions] = useState({});
   const [editingEvent, setEditingEvent] = useState(null);
   const [showEventsMenu, setShowEventsMenu] = useState(false);
+  const [showPermissionsModal, setShowPermissionsModal] = useState(false);
+  const [selectedRole, setSelectedRole] = useState('');
+  const [rolePermissions, setRolePermissions] = useState([]);
+  const [allPermissions, setAllPermissions] = useState([]);
+  const [currentPermissions, setCurrentPermissions] = useState({});
+  const [roles, setRoles] = useState({});
 
   // Login form state
   const [loginForm, setLoginForm] = useState({ username: '', password: '' });

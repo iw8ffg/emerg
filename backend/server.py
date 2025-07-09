@@ -1072,49 +1072,7 @@ async def get_inventory_locations(current_user: dict = Depends(get_current_user)
     locations = db.inventory.distinct("location")
     return {"locations": locations}
 
-@app.get("/api/inventory/alerts")
-async def get_inventory_alerts(current_user: dict = Depends(get_current_user)):
-    try:
-        # Get low stock items
-        low_stock_items = list(db.inventory.find({
-            "$expr": {"$lte": ["$quantity", "$min_quantity"]}
-        }, {"_id": 0}))
-        
-        # Get expiring items (next 30 days)
-        today = datetime.now()
-        thirty_days_from_now = today + timedelta(days=30)
-        
-        expiring_items = []
-        all_items = list(db.inventory.find({"expiry_date": {"$exists": True, "$ne": None}}, {"_id": 0}))
-        
-        for item in all_items:
-            expiry_date = item.get('expiry_date')
-            if expiry_date:
-                try:
-                    if isinstance(expiry_date, str):
-                        expiry_date = datetime.fromisoformat(expiry_date.replace('Z', ''))
-                    elif isinstance(expiry_date, datetime):
-                        pass  # Already datetime object
-                    else:
-                        continue
-                    
-                    if expiry_date <= thirty_days_from_now:
-                        expiring_items.append(item)
-                except:
-                    continue
-        
-        return {
-            "low_stock_items": low_stock_items,
-            "expiring_items": expiring_items,
-            "total_alerts": len(low_stock_items) + len(expiring_items)
-        }
-    except Exception as e:
-        return {
-            "low_stock_items": [],
-            "expiring_items": [],
-            "total_alerts": 0,
-            "error": str(e)
-        }
+
 
 # Operational Log endpoints
 @app.post("/api/logs")

@@ -1457,6 +1457,224 @@ async def get_inventory_locations(current_user: dict = Depends(get_current_user)
     locations = db.inventory.distinct("location")
     return {"locations": locations}
 
+# Event Types Management endpoints
+@app.get("/api/event-types")
+async def get_event_types(current_user: dict = Depends(get_current_user)):
+    """Get all event types"""
+    event_types = list(db.event_types.find({}, {"_id": 0}).sort("name", 1))
+    return event_types
+
+@app.post("/api/event-types")
+async def create_event_type(event_type: EventTypeCreate, current_user: dict = Depends(get_current_user)):
+    """Create new event type (admin and coordinator only)"""
+    if current_user["role"] not in ["admin", "coordinator"]:
+        raise HTTPException(status_code=403, detail="Permessi insufficienti")
+    
+    # Check if event type already exists
+    existing = db.event_types.find_one({"name": event_type.name.lower()})
+    if existing:
+        raise HTTPException(status_code=400, detail="Tipo di evento già esistente")
+    
+    event_type_data = {
+        "id": str(uuid.uuid4()),
+        "name": event_type.name.lower(),
+        "description": event_type.description,
+        "is_default": False,
+        "created_at": datetime.now(),
+        "created_by": current_user["username"]
+    }
+    
+    db.event_types.insert_one(event_type_data)
+    
+    # Create log entry
+    log_data = {
+        "id": str(uuid.uuid4()),
+        "timestamp": datetime.now(),
+        "operator": current_user["username"],
+        "action": f"Creazione nuovo tipo evento: {event_type.name}",
+        "details": f"Nuovo tipo di evento '{event_type.name}' aggiunto al sistema",
+        "priority": "normale"
+    }
+    db.logs.insert_one(log_data)
+    
+    return {"message": "Tipo di evento creato con successo", "event_type": event_type_data}
+
+@app.put("/api/event-types/{event_type_id}")
+async def update_event_type(event_type_id: str, event_type: EventTypeCreate, current_user: dict = Depends(get_current_user)):
+    """Update event type (admin and coordinator only)"""
+    if current_user["role"] not in ["admin", "coordinator"]:
+        raise HTTPException(status_code=403, detail="Permessi insufficienti")
+    
+    existing = db.event_types.find_one({"id": event_type_id})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Tipo di evento non trovato")
+    
+    # Check if name conflicts with another event type
+    name_conflict = db.event_types.find_one({"name": event_type.name.lower(), "id": {"$ne": event_type_id}})
+    if name_conflict:
+        raise HTTPException(status_code=400, detail="Nome tipo di evento già in uso")
+    
+    update_data = {
+        "name": event_type.name.lower(),
+        "description": event_type.description
+    }
+    
+    db.event_types.update_one({"id": event_type_id}, {"$set": update_data})
+    
+    # Create log entry
+    log_data = {
+        "id": str(uuid.uuid4()),
+        "timestamp": datetime.now(),
+        "operator": current_user["username"],
+        "action": f"Modifica tipo evento: {event_type.name}",
+        "details": f"Tipo di evento modificato da '{existing['name']}' a '{event_type.name}'",
+        "priority": "normale"
+    }
+    db.logs.insert_one(log_data)
+    
+    return {"message": "Tipo di evento aggiornato con successo"}
+
+@app.delete("/api/event-types/{event_type_id}")
+async def delete_event_type(event_type_id: str, current_user: dict = Depends(get_current_user)):
+    """Delete event type (admin and coordinator only, cannot delete default types)"""
+    if current_user["role"] not in ["admin", "coordinator"]:
+        raise HTTPException(status_code=403, detail="Permessi insufficienti")
+    
+    existing = db.event_types.find_one({"id": event_type_id})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Tipo di evento non trovato")
+    
+    if existing.get("is_default", False):
+        raise HTTPException(status_code=400, detail="Impossibile eliminare un tipo di evento predefinito")
+    
+    # Check if the event type is in use
+    events_using_type = db.events.count_documents({"event_type": existing["name"]})
+    if events_using_type > 0:
+        raise HTTPException(status_code=400, detail=f"Impossibile eliminare: {events_using_type} eventi utilizzano questo tipo")
+    
+    db.event_types.delete_one({"id": event_type_id})
+    
+    # Create log entry
+    log_data = {
+        "id": str(uuid.uuid4()),
+        "timestamp": datetime.now(),
+        "operator": current_user["username"],
+        "action": f"Eliminazione tipo evento: {existing['name']}",
+        "details": f"Tipo di evento '{existing['name']}' eliminato dal sistema",
+        "priority": "alta"
+    }
+    db.logs.insert_one(log_data)
+    
+    return {"message": "Tipo di evento eliminato con successo"}
+
+# Inventory Categories Management endpoints
+@app.get("/api/inventory-categories")
+async def get_inventory_categories(current_user: dict = Depends(get_current_user)):
+    """Get all inventory categories"""
+    categories = list(db.inventory_categories.find({}, {"_id": 0}).sort("name", 1))
+    return categories
+
+@app.post("/api/inventory-categories")
+async def create_inventory_category(category: InventoryCategoryCreate, current_user: dict = Depends(get_current_user)):
+    """Create new inventory category (admin only)"""
+    if current_user["role"] != "admin":
+        raise HTTPException(status_code=403, detail="Solo gli amministratori possono gestire le categorie inventario")
+    
+    # Check if category already exists
+    existing = db.inventory_categories.find_one({"name": category.name.lower()})
+    if existing:
+        raise HTTPException(status_code=400, detail="Categoria già esistente")
+    
+    category_data = {
+        "id": str(uuid.uuid4()),
+        "name": category.name.lower(),
+        "description": category.description,
+        "icon": category.icon or "📦",
+        "created_at": datetime.now(),
+        "created_by": current_user["username"]
+    }
+    
+    db.inventory_categories.insert_one(category_data)
+    
+    # Create log entry
+    log_data = {
+        "id": str(uuid.uuid4()),
+        "timestamp": datetime.now(),
+        "operator": current_user["username"],
+        "action": f"Creazione nuova categoria inventario: {category.name}",
+        "details": f"Nuova categoria '{category.name}' aggiunta all'inventario",
+        "priority": "normale"
+    }
+    db.logs.insert_one(log_data)
+    
+    return {"message": "Categoria creata con successo", "category": category_data}
+
+@app.put("/api/inventory-categories/{category_id}")
+async def update_inventory_category(category_id: str, category: InventoryCategoryCreate, current_user: dict = Depends(get_current_user)):
+    """Update inventory category (admin only)"""
+    if current_user["role"] != "admin":
+        raise HTTPException(status_code=403, detail="Solo gli amministratori possono gestire le categorie inventario")
+    
+    existing = db.inventory_categories.find_one({"id": category_id})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Categoria non trovata")
+    
+    # Check if name conflicts with another category
+    name_conflict = db.inventory_categories.find_one({"name": category.name.lower(), "id": {"$ne": category_id}})
+    if name_conflict:
+        raise HTTPException(status_code=400, detail="Nome categoria già in uso")
+    
+    update_data = {
+        "name": category.name.lower(),
+        "description": category.description,
+        "icon": category.icon or existing.get("icon", "📦")
+    }
+    
+    db.inventory_categories.update_one({"id": category_id}, {"$set": update_data})
+    
+    # Create log entry
+    log_data = {
+        "id": str(uuid.uuid4()),
+        "timestamp": datetime.now(),
+        "operator": current_user["username"],
+        "action": f"Modifica categoria inventario: {category.name}",
+        "details": f"Categoria modificata da '{existing['name']}' a '{category.name}'",
+        "priority": "normale"
+    }
+    db.logs.insert_one(log_data)
+    
+    return {"message": "Categoria aggiornata con successo"}
+
+@app.delete("/api/inventory-categories/{category_id}")
+async def delete_inventory_category(category_id: str, current_user: dict = Depends(get_current_user)):
+    """Delete inventory category (admin only)"""
+    if current_user["role"] != "admin":
+        raise HTTPException(status_code=403, detail="Solo gli amministratori possono gestire le categorie inventario")
+    
+    existing = db.inventory_categories.find_one({"id": category_id})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Categoria non trovata")
+    
+    # Check if the category is in use
+    items_using_category = db.inventory.count_documents({"category": existing["name"]})
+    if items_using_category > 0:
+        raise HTTPException(status_code=400, detail=f"Impossibile eliminare: {items_using_category} articoli utilizzano questa categoria")
+    
+    db.inventory_categories.delete_one({"id": category_id})
+    
+    # Create log entry
+    log_data = {
+        "id": str(uuid.uuid4()),
+        "timestamp": datetime.now(),
+        "operator": current_user["username"],
+        "action": f"Eliminazione categoria inventario: {existing['name']}",
+        "details": f"Categoria '{existing['name']}' eliminata dall'inventario",
+        "priority": "alta"
+    }
+    db.logs.insert_one(log_data)
+    
+    return {"message": "Categoria eliminata con successo"}
+
 
 
 # Operational Log endpoints

@@ -2168,6 +2168,7 @@ function App() {
             loading={loading}
             setLoading={setLoading}
             API_BASE_URL={API_BASE_URL}
+            inventoryCategories={inventoryCategories}
           />
         )}
 

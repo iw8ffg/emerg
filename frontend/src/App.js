@@ -688,8 +688,16 @@ function App() {
     }
   };
 
-  const createInventoryCategory = async (e) => {
-    e.preventDefault();
+  const createInventoryCategory = async (formDataOrEvent) => {
+    // If it's a form event, prevent default and use the form state
+    if (formDataOrEvent?.preventDefault) {
+      formDataOrEvent.preventDefault();
+      var formData = inventoryCategoryForm;
+    } else {
+      // If it's direct data, use it
+      var formData = formDataOrEvent;
+    }
+    
     setLoading(true);
     setError('');
     
@@ -700,51 +708,83 @@ function App() {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`
         },
-        body: JSON.stringify(inventoryCategoryForm)
+        body: JSON.stringify(formData)
       });
       
       if (response.ok) {
         setSuccess('Categoria inventario creata con successo!');
-        setInventoryCategoryForm({ name: '', description: '', icon: '' });
-        setShowAddInventoryCategory(false);
+        if (formDataOrEvent?.preventDefault) {
+          // Only reset form state if called from main component
+          setInventoryCategoryForm({ name: '', description: '', icon: '' });
+          setShowAddInventoryCategory(false);
+        }
         loadInventoryCategories();
       } else {
         const data = await response.json();
-        setError(data.detail || 'Errore durante la creazione della categoria');
+        const errorMessage = data.detail || 'Errore durante la creazione della categoria';
+        setError(errorMessage);
+        if (!formDataOrEvent?.preventDefault) {
+          throw new Error(errorMessage);
+        }
       }
     } catch (error) {
-      setError('Errore di connessione al server');
+      const errorMessage = 'Errore di connessione al server';
+      setError(errorMessage);
+      if (!formDataOrEvent?.preventDefault) {
+        throw new Error(errorMessage);
+      }
     } finally {
       setLoading(false);
     }
   };
 
-  const updateInventoryCategory = async (e) => {
-    e.preventDefault();
+  const updateInventoryCategory = async (categoryIdOrEvent, formData) => {
+    // If it's a form event, prevent default and use the form state
+    if (categoryIdOrEvent?.preventDefault) {
+      categoryIdOrEvent.preventDefault();
+      var categoryId = editingInventoryCategory.id;
+      var updateData = inventoryCategoryForm;
+    } else {
+      // If it's direct data, use it
+      var categoryId = categoryIdOrEvent;
+      var updateData = formData;
+    }
+    
     setLoading(true);
     setError('');
     
     try {
-      const response = await fetch(`${API_BASE_URL}/api/inventory-categories/${editingInventoryCategory.id}`, {
+      const response = await fetch(`${API_BASE_URL}/api/inventory-categories/${categoryId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`
         },
-        body: JSON.stringify(inventoryCategoryForm)
+        body: JSON.stringify(updateData)
       });
       
       if (response.ok) {
         setSuccess('Categoria inventario aggiornata con successo!');
-        setInventoryCategoryForm({ name: '', description: '', icon: '' });
-        setEditingInventoryCategory(null);
+        if (categoryIdOrEvent?.preventDefault) {
+          // Only reset form state if called from main component
+          setInventoryCategoryForm({ name: '', description: '', icon: '' });
+          setEditingInventoryCategory(null);
+        }
         loadInventoryCategories();
       } else {
         const data = await response.json();
-        setError(data.detail || 'Errore durante l\'aggiornamento della categoria');
+        const errorMessage = data.detail || 'Errore durante l\'aggiornamento della categoria';
+        setError(errorMessage);
+        if (!categoryIdOrEvent?.preventDefault) {
+          throw new Error(errorMessage);
+        }
       }
     } catch (error) {
-      setError('Errore di connessione al server');
+      const errorMessage = 'Errore di connessione al server';
+      setError(errorMessage);
+      if (!categoryIdOrEvent?.preventDefault) {
+        throw new Error(errorMessage);
+      }
     } finally {
       setLoading(false);
     }

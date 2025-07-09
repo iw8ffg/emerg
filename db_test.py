@@ -216,6 +216,33 @@ class DatabaseManagementTester:
             print(f"❌ Database update failed: {update_response.get('message')}")
             return False
         
+        # After switching database, we need to login again
+        print("\n--- Re-authenticating after database switch ---")
+        if not self.test_login("admin", "admin123"):
+            print("⚠️ Login with admin/admin123 failed after database switch, trying testadmin...")
+            if not self.test_login("testadmin", "testadmin123"):
+                print("⚠️ Login with testadmin failed, trying coordinator...")
+                if not self.test_login("coordinatore1", "coord123"):
+                    print("❌ All login attempts failed after database switch")
+                    
+                    # Try to switch back to original database without authentication
+                    print(f"\n--- Attempting to switch back to original database {original_database_name} without auth ---")
+                    url = f"{self.base_url}/api/admin/database/update"
+                    data = {
+                        "mongo_url": original_mongo_url,
+                        "database_name": original_database_name,
+                        "test_connection": True,
+                        "create_if_not_exists": False
+                    }
+                    try:
+                        response = requests.post(url, json=data)
+                        print(f"Response status: {response.status_code}")
+                        print(f"Response: {response.text}")
+                    except Exception as e:
+                        print(f"Error: {str(e)}")
+                    
+                    return False
+        
         # Verify the database was switched
         print("\n--- Verifying database switch ---")
         verify_config_success, verify_config_response = self.test_database_config()
@@ -241,6 +268,16 @@ class DatabaseManagementTester:
         if not switch_back_success or switch_back_response.get('status') != 'success':
             print(f"❌ Failed to switch back to original database: {switch_back_response.get('message')}")
             return False
+        
+        # Re-authenticate after switching back
+        print("\n--- Re-authenticating after switching back ---")
+        if not self.test_login("admin", "admin123"):
+            print("⚠️ Login with admin/admin123 failed after switching back, trying testadmin...")
+            if not self.test_login("testadmin", "testadmin123"):
+                print("⚠️ Login with testadmin failed, trying coordinator...")
+                if not self.test_login("coordinatore1", "coord123"):
+                    print("❌ All login attempts failed after switching back")
+                    return False
         
         # Final verification
         final_verify_success, final_verify_response = self.test_database_config()

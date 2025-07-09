@@ -215,6 +215,51 @@ const InventoryManagement = ({
   // Check permissions
   const canEdit = user && ['admin', 'coordinator', 'warehouse'].includes(user.role);
   const canDelete = user && ['admin', 'coordinator'].includes(user.role);
+  const canManageCategories = user && user.role === 'admin';
+
+  // Category management functions
+  const handleCreateCategory = async (e) => {
+    e.preventDefault();
+    try {
+      await createInventoryCategory(categoryForm);
+      setCategoryForm({ name: '', description: '', icon: '' });
+      setShowAddCategory(false);
+      loadInventoryCategories();
+    } catch (error) {
+      console.error('Error creating category:', error);
+    }
+  };
+
+  const handleUpdateCategory = async (e) => {
+    e.preventDefault();
+    try {
+      await updateInventoryCategory(editingCategory.id, categoryForm);
+      setCategoryForm({ name: '', description: '', icon: '' });
+      setEditingCategory(null);
+      loadInventoryCategories();
+    } catch (error) {
+      console.error('Error updating category:', error);
+    }
+  };
+
+  const startEditingCategory = (category) => {
+    setEditingCategory(category);
+    setCategoryForm({
+      name: category.name,
+      description: category.description || '',
+      icon: category.icon || ''
+    });
+    setShowAddCategory(true);
+  };
+
+  const handleDeleteCategory = async (categoryId) => {
+    try {
+      await deleteInventoryCategory(categoryId);
+      loadInventoryCategories();
+    } catch (error) {
+      console.error('Error deleting category:', error);
+    }
+  };
 
   if (currentView === 'create' || currentView === 'edit') {
     return (

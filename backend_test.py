@@ -820,13 +820,50 @@ def main():
         print("❌ System health check failed")
         return 1
     
+    # Try to register a new admin user for testing
+    print("\n--- Registering Test Admin User ---")
+    admin_username = "testadmin"
+    admin_password = "testadmin123"
+    
+    register_data = {
+        "username": admin_username,
+        "email": "testadmin@example.com",
+        "password": admin_password,
+        "role": "admin",
+        "full_name": "Test Administrator"
+    }
+    
+    success, response = tester.run_test(
+        "Register test admin user",
+        "POST",
+        "auth/register",
+        200,
+        data=register_data
+    )
+    
+    # If registration fails, try with the default admin credentials
+    if not success:
+        print("⚠️ Failed to register new admin user, will try with default credentials")
+        admin_username = "admin"
+        admin_password = "admin123"
+    else:
+        print("✅ Successfully registered new admin user")
+    
     # Test login with admin credentials
     print("\n--- Testing Admin Login ---")
-    if not tester.test_login("admin", "admin123"):
+    if not tester.test_login(admin_username, admin_password):
         print("❌ Login with admin credentials failed")
-        return 1
+        
+        # Try with the default admin credentials as fallback
+        if admin_username != "admin":
+            print("Trying with default admin credentials...")
+            if not tester.test_login("admin", "admin123"):
+                print("❌ Login with default admin credentials also failed")
+                return 1
+        else:
+            return 1
     else:
-        print("✅ Successfully logged in with admin credentials")
+        print(f"✅ Successfully logged in with admin credentials ({admin_username})")
     
     # Test getting current user info to verify admin role
     print("\n--- Verifying Admin User Role ---")
@@ -834,6 +871,7 @@ def main():
         print("✅ Admin user has correct permissions")
     else:
         print("❌ Failed to verify admin user permissions")
+        return 1
     
     # Test 1: Event Listing (for dropdown functionality)
     print("\n=== TEST 1: EVENT LISTING FOR DROPDOWN ===")

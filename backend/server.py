@@ -118,6 +118,23 @@ class UserUpdate(BaseModel):
     active: Optional[bool] = None
     new_password: Optional[str] = None
 
+class RolePermissions(BaseModel):
+    role: str
+    permissions: List[str]
+    description: Optional[str] = None
+
+class EventUpdate(BaseModel):
+    title: Optional[str] = None
+    description: Optional[str] = None
+    event_type: Optional[str] = None
+    severity: Optional[str] = None
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    address: Optional[str] = None
+    status: Optional[str] = None
+    resources_needed: Optional[List[str]] = None
+    notes: Optional[str] = None
+
 class OperationalLog(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     timestamp: datetime = Field(default_factory=datetime.now)

@@ -9,6 +9,7 @@ import jwt
 import hashlib
 import os
 from pymongo import MongoClient
+from pymongo.errors import ServerSelectionTimeoutError, ConnectionFailure, ConfigurationError
 import uuid
 from bson import ObjectId
 import pandas as pd

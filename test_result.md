@@ -119,6 +119,9 @@ backend:
       - working: true
         agent: "testing"
         comment: "Tested all event types endpoints. GET /api/event-types works correctly and returns default event types. DELETE /api/event-types/{id} correctly prevents deletion of default types. Authorization checks work properly, restricting access to admin/coordinator users. POST and PUT endpoints are implemented but have a MongoDB ObjectId serialization issue that needs to be fixed."
+      - working: true
+        agent: "testing"
+        comment: "Retested the POST and PUT endpoints for event types. The MongoDB ObjectId serialization issue has been fixed. Successfully created a new event type, updated it, and verified the changes. The endpoints now return properly serialized responses without datetime objects. Full CRUD functionality is working correctly with proper authorization checks."
         
   - task: "Inventory Categories Endpoints"
     implemented: true

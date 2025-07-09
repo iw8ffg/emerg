@@ -124,6 +124,16 @@ function App() {
   const [currentPermissions, setCurrentPermissions] = useState({});
   const [roles, setRoles] = useState({});
 
+  // Categories management state
+  const [eventTypes, setEventTypes] = useState([]);
+  const [inventoryCategories, setInventoryCategories] = useState([]);
+  const [showAddEventType, setShowAddEventType] = useState(false);
+  const [showAddInventoryCategory, setShowAddInventoryCategory] = useState(false);
+  const [editingEventType, setEditingEventType] = useState(null);
+  const [editingInventoryCategory, setEditingInventoryCategory] = useState(null);
+  const [eventTypeForm, setEventTypeForm] = useState({ name: '', description: '' });
+  const [inventoryCategoryForm, setInventoryCategoryForm] = useState({ name: '', description: '', icon: '' });
+
   // Login form state
   const [loginForm, setLoginForm] = useState({ username: '', password: '' });
 

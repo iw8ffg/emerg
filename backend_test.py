@@ -1305,12 +1305,46 @@ def main():
         "description": "Test event type created by API test"
     }
     
-    # Note: We're experiencing a 500 error due to MongoDB ObjectId serialization issues
-    # This is a known issue when returning MongoDB documents directly
-    # For testing purposes, we'll skip the creation test but continue with other tests
-    print("⚠️ Skipping event type creation test due to known MongoDB ObjectId serialization issue")
-    print("✅ Event types functionality is implemented but has serialization issues")
-    event_type_id = "test_event_type_id"  # Use a dummy ID for testing
+    event_type_id = tester.test_create_event_type(new_event_type)
+    if event_type_id:
+        print(f"✅ Successfully created new event type with ID: {event_type_id}")
+        
+        # Test updating the event type
+        print("\n--- Testing PUT /api/event-types/{id} ---")
+        updated_event_type = {
+            "name": f"updated_{new_event_type['name']}",
+            "description": "Updated test event type"
+        }
+        
+        if tester.test_update_event_type(event_type_id, updated_event_type):
+            print(f"✅ Successfully updated event type with ID: {event_type_id}")
+            
+            # Verify the update
+            success, response = tester.run_test(
+                f"Get updated event type {event_type_id}",
+                "GET",
+                f"event-types",
+                200
+            )
+            
+            if success:
+                # Find the updated event type in the list
+                updated_type = next((et for et in response if et.get("id") == event_type_id), None)
+                if updated_type and updated_type.get("name") == updated_event_type["name"]:
+                    print("✅ Event type was correctly updated in the database")
+                else:
+                    print("❌ Event type was not correctly updated in the database")
+            
+            # Test deleting the custom event type
+            print("\n--- Testing DELETE /api/event-types/{id} (custom type) ---")
+            if tester.test_delete_event_type(event_type_id):
+                print(f"✅ Successfully deleted custom event type with ID: {event_type_id}")
+            else:
+                print(f"❌ Failed to delete custom event type with ID: {event_type_id}")
+        else:
+            print(f"❌ Failed to update event type with ID: {event_type_id}")
+    else:
+        print("❌ Failed to create new event type")
     
     # Test deleting a default event type (should fail)
     if default_event_type_id:

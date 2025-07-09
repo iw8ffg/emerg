@@ -1614,7 +1614,14 @@ async def create_inventory_category(category: InventoryCategoryCreate, current_u
     }
     db.logs.insert_one(log_data)
     
-    return {"message": "Categoria creata con successo", "category": category_data}
+    # Return the created category without datetime objects
+    return {"message": "Categoria creata con successo", "category": {
+        "id": category_data["id"],
+        "name": category_data["name"],
+        "description": category_data["description"],
+        "icon": category_data["icon"],
+        "created_by": category_data["created_by"]
+    }}
 
 @app.put("/api/inventory-categories/{category_id}")
 async def update_inventory_category(category_id: str, category: InventoryCategoryCreate, current_user: dict = Depends(get_current_user)):

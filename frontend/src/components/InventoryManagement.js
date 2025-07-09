@@ -224,7 +224,6 @@ const InventoryManagement = ({
       await createInventoryCategory(categoryForm);
       setCategoryForm({ name: '', description: '', icon: '' });
       setShowAddCategory(false);
-      loadInventoryCategories();
     } catch (error) {
       console.error('Error creating category:', error);
     }
@@ -236,7 +235,7 @@ const InventoryManagement = ({
       await updateInventoryCategory(editingCategory.id, categoryForm);
       setCategoryForm({ name: '', description: '', icon: '' });
       setEditingCategory(null);
-      loadInventoryCategories();
+      setShowAddCategory(false);
     } catch (error) {
       console.error('Error updating category:', error);
     }
@@ -255,7 +254,6 @@ const InventoryManagement = ({
   const handleDeleteCategory = async (categoryId) => {
     try {
       await deleteInventoryCategory(categoryId);
-      loadInventoryCategories();
     } catch (error) {
       console.error('Error deleting category:', error);
     }

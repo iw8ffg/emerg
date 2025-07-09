@@ -44,7 +44,7 @@ ALGORITHM = "HS256"
 # Security
 security = HTTPBearer()
 
-# User roles
+# User roles with default permissions
 USER_ROLES = {
     "admin": "Amministratore",
     "coordinator": "Coordinatore Emergenze", 
@@ -52,6 +52,68 @@ USER_ROLES = {
     "warehouse": "Addetto Magazzino",
     "viewer": "Visualizzatore"
 }
+
+# Default permissions for each role
+DEFAULT_PERMISSIONS = {
+    "admin": [
+        "events.create", "events.read", "events.update", "events.delete",
+        "inventory.create", "inventory.read", "inventory.update", "inventory.delete",
+        "logs.create", "logs.read", "logs.update", "logs.delete",
+        "users.create", "users.read", "users.update", "users.delete",
+        "resources.create", "resources.read", "resources.update", "resources.delete",
+        "reports.generate", "dashboard.read", "permissions.manage"
+    ],
+    "coordinator": [
+        "events.create", "events.read", "events.update",
+        "inventory.create", "inventory.read", "inventory.update", "inventory.delete",
+        "logs.create", "logs.read",
+        "resources.create", "resources.read", "resources.update", "resources.delete",
+        "reports.generate", "dashboard.read"
+    ],
+    "operator": [
+        "events.create", "events.read", "events.update",
+        "logs.create", "logs.read",
+        "dashboard.read"
+    ],
+    "warehouse": [
+        "inventory.create", "inventory.read", "inventory.update", "inventory.delete",
+        "dashboard.read"
+    ],
+    "viewer": [
+        "events.read", "inventory.read", "logs.read", "dashboard.read"
+    ]
+}
+
+# Helper function to check permissions
+def check_permission(user_role: str, permission: str) -> bool:
+    """Check if user role has specific permission"""
+    try:
+        # Get permissions from database or use defaults
+        role_permissions = db.role_permissions.find_one({"role": user_role})
+        if role_permissions:
+            return permission in role_permissions.get("permissions", [])
+        else:
+            # Use default permissions if not found in database
+            return permission in DEFAULT_PERMISSIONS.get(user_role, [])
+    except:
+        return False
+
+def require_permission(permission: str):
+    """Decorator to require specific permission"""
+    def decorator(func):
+        def wrapper(*args, **kwargs):
+            # Get current user from kwargs (assuming it's passed)
+            current_user = kwargs.get('current_user')
+            if not current_user:
+                raise HTTPException(status_code=401, detail="Utente non autenticato")
+            
+            user_role = current_user.get('role')
+            if not check_permission(user_role, permission):
+                raise HTTPException(status_code=403, detail="Permessi insufficienti")
+            
+            return func(*args, **kwargs)
+        return wrapper
+    return decorator
 
 # Pydantic models
 class UserCreate(BaseModel):

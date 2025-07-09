@@ -1784,6 +1784,184 @@ function App() {
           </div>
         )}
 
+        {/* Event Types Management View */}
+        {currentView === 'event-types' && canAccess(['admin', 'coordinator']) && (
+          <div className="bg-white rounded-lg shadow">
+            <div className="px-6 py-4 border-b border-gray-200">
+              <div className="flex justify-between items-center">
+                <h3 className="text-lg font-medium text-gray-900">Gestione Tipi di Evento</h3>
+                <button
+                  onClick={() => setShowAddEventType(true)}
+                  className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700"
+                >
+                  <PlusIcon />
+                  <span>Nuovo Tipo</span>
+                </button>
+              </div>
+            </div>
+            
+            <div className="px-6 py-4">
+              {/* Quick Add Form */}
+              {showAddEventType && (
+                <div className="mb-6 p-4 bg-blue-50 rounded-lg">
+                  <form onSubmit={createEventType} className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Nome Tipo *
+                        </label>
+                        <input
+                          type="text"
+                          value={eventTypeForm.name}
+                          onChange={(e) => setEventTypeForm({ ...eventTypeForm, name: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="es. emergenza_nucleare"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Descrizione
+                        </label>
+                        <input
+                          type="text"
+                          value={eventTypeForm.description}
+                          onChange={(e) => setEventTypeForm({ ...eventTypeForm, description: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="Descrizione del tipo di evento"
+                        />
+                      </div>
+                    </div>
+                    <div className="flex justify-end space-x-3">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowAddEventType(false);
+                          setEventTypeForm({ name: '', description: '' });
+                        }}
+                        className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+                      >
+                        Annulla
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={loading}
+                        className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400"
+                      >
+                        {loading ? 'Creazione...' : 'Crea Tipo'}
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              )}
+
+              {/* Edit Form */}
+              {editingEventType && (
+                <div className="mb-6 p-4 bg-yellow-50 rounded-lg">
+                  <form onSubmit={updateEventType} className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Nome Tipo *
+                        </label>
+                        <input
+                          type="text"
+                          value={eventTypeForm.name}
+                          onChange={(e) => setEventTypeForm({ ...eventTypeForm, name: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Descrizione
+                        </label>
+                        <input
+                          type="text"
+                          value={eventTypeForm.description}
+                          onChange={(e) => setEventTypeForm({ ...eventTypeForm, description: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+                    </div>
+                    <div className="flex justify-end space-x-3">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEditingEventType(null);
+                          setEventTypeForm({ name: '', description: '' });
+                        }}
+                        className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+                      >
+                        Annulla
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={loading}
+                        className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-yellow-600 hover:bg-yellow-700 disabled:bg-gray-400"
+                      >
+                        {loading ? 'Aggiornamento...' : 'Aggiorna Tipo'}
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              )}
+
+              {/* Event Types List */}
+              <div className="space-y-4">
+                {eventTypes.map((eventType) => (
+                  <div key={eventType.id} className="border border-gray-200 rounded-lg p-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-3">
+                          <h4 className="font-medium text-gray-900">
+                            {eventType.name.charAt(0).toUpperCase() + eventType.name.slice(1).replace('_', ' ')}
+                          </h4>
+                          {eventType.is_default && (
+                            <span className="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full">
+                              Predefinito
+                            </span>
+                          )}
+                        </div>
+                        {eventType.description && (
+                          <p className="text-sm text-gray-600 mt-1">{eventType.description}</p>
+                        )}
+                        <p className="text-xs text-gray-500 mt-2">
+                          Creato da: {eventType.created_by} • {new Date(eventType.created_at).toLocaleString()}
+                        </p>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <button
+                          onClick={() => {
+                            setEditingEventType(eventType);
+                            setEventTypeForm({
+                              name: eventType.name,
+                              description: eventType.description || ''
+                            });
+                          }}
+                          className="flex items-center space-x-1 px-3 py-1 bg-yellow-600 text-white rounded text-sm hover:bg-yellow-700"
+                        >
+                          <EditIcon className="h-3 w-3" />
+                          <span>Modifica</span>
+                        </button>
+                        {!eventType.is_default && (
+                          <button
+                            onClick={() => deleteEventType(eventType.id)}
+                            className="flex items-center space-x-1 px-3 py-1 bg-red-600 text-white rounded text-sm hover:bg-red-700"
+                          >
+                            <DeleteIcon className="h-3 w-3" />
+                            <span>Elimina</span>
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Inventory View */}
         {currentView === 'inventory' && canAccess(['admin', 'coordinator', 'warehouse']) && (
           <InventoryManagement

@@ -957,6 +957,213 @@ class EmergencySystemAPITester:
         # Test passes if create fails with 403
         return create_success
     
+    # Database Management Tests
+    def test_database_management_endpoints(self):
+        """Test database management endpoints (admin only)"""
+        print("\n=== TESTING DATABASE MANAGEMENT ENDPOINTS ===")
+        
+        # Test 1: Get database configuration
+        print("\n--- Testing GET /api/admin/database/config ---")
+        success, response = self.run_test(
+            "Get database configuration",
+            "GET",
+            "admin/database/config",
+            200
+        )
+        if success:
+            print(f"✅ Database configuration endpoint is working correctly")
+            print(f"Current database: {response.get('database_name')}")
+            print(f"MongoDB URL: {response.get('mongo_url')}")
+            print(f"Collections: {response.get('collections')}")
+            db_config_working = True
+        else:
+            print("❌ Database configuration endpoint failed")
+            db_config_working = False
+        
+        # Test 2: Test database connection
+        print("\n--- Testing POST /api/admin/database/test ---")
+        # Test with valid MongoDB URL
+        valid_config = {
+            "mongo_url": "mongodb://localhost:27017",
+            "database_name": "test_database",
+            "connection_timeout": 5000
+        }
+        success, response = self.run_test(
+            "Test database connection with valid config",
+            "POST",
+            "admin/database/test",
+            200,
+            data=valid_config
+        )
+        if success and response.get("status") == "success":
+            print(f"✅ Database connection test endpoint is working correctly with valid config")
+            print(f"Response: {response.get('message')}")
+            db_test_valid_working = True
+        else:
+            print("❌ Database connection test endpoint failed with valid config")
+            db_test_valid_working = False
+        
+        # Test with invalid MongoDB URL
+        invalid_config = {
+            "mongo_url": "mongodb://invalid-host:27017",
+            "database_name": "test_database",
+            "connection_timeout": 2000  # Short timeout for faster test
+        }
+        success, response = self.run_test(
+            "Test database connection with invalid config",
+            "POST",
+            "admin/database/test",
+            200,
+            data=invalid_config
+        )
+        if success and response.get("status") == "error":
+            print(f"✅ Database connection test endpoint correctly handles invalid config")
+            print(f"Error message: {response.get('message')}")
+            db_test_invalid_working = True
+        else:
+            print("❌ Database connection test endpoint failed to handle invalid config")
+            db_test_invalid_working = False
+        
+        # Test 3: Get database status
+        print("\n--- Testing GET /api/admin/database/status ---")
+        success, response = self.run_test(
+            "Get database status",
+            "GET",
+            "admin/database/status",
+            200
+        )
+        if success:
+            print(f"✅ Database status endpoint is working correctly")
+            print(f"Server version: {response.get('server_version')}")
+            print(f"Uptime: {response.get('uptime')} seconds")
+            print(f"Total documents: {response.get('total_documents')}")
+            print(f"Collections: {len(response.get('collections', {}))} collections")
+            db_status_working = True
+        else:
+            print("❌ Database status endpoint failed")
+            db_status_working = False
+        
+        # Test 4: Update database configuration
+        print("\n--- Testing POST /api/admin/database/update ---")
+        # Test with existing database
+        update_config = {
+            "mongo_url": "mongodb://localhost:27017",
+            "database_name": "emergency_management_test",
+            "test_connection": True,
+            "create_if_not_exists": True
+        }
+        success, response = self.run_test(
+            "Update database configuration",
+            "POST",
+            "admin/database/update",
+            200,
+            data=update_config
+        )
+        if success and response.get("status") == "success":
+            print(f"✅ Database update endpoint is working correctly")
+            print(f"Response: {response.get('message')}")
+            print(f"New database: {response.get('database_name')}")
+            print(f"Created new: {response.get('created_new')}")
+            db_update_working = True
+            
+            # Switch back to original database
+            original_config = {
+                "mongo_url": "mongodb://localhost:27017",
+                "database_name": "emergency_management",
+                "test_connection": True,
+                "create_if_not_exists": False
+            }
+            self.run_test(
+                "Switch back to original database",
+                "POST",
+                "admin/database/update",
+                200,
+                data=original_config
+            )
+        else:
+            print("❌ Database update endpoint failed")
+            db_update_working = False
+        
+        # Test 5: Test database endpoints with non-admin user
+        print("\n--- Testing database endpoints with non-admin user ---")
+        
+        # Save current token
+        original_token = self.token
+        
+        # Create or use existing non-admin user
+        non_admin_username = "testoperator"
+        non_admin_password = "testoperator123"
+        
+        # Try to login with non-admin user
+        success, response = self.run_test(
+            f"Login with non-admin user '{non_admin_username}'",
+            "POST",
+            "auth/login",
+            200,
+            data={"username": non_admin_username, "password": non_admin_password}
+        )
+        
+        if success and 'access_token' in response:
+            non_admin_token = response['access_token']
+            self.token = non_admin_token
+            
+            # Try to access database config endpoint
+            config_success, _ = self.run_test(
+                "Get database config with non-admin user (should fail)",
+                "GET",
+                "admin/database/config",
+                403  # Expecting forbidden
+            )
+            
+            # Try to test database connection
+            test_success, _ = self.run_test(
+                "Test database connection with non-admin user (should fail)",
+                "POST",
+                "admin/database/test",
+                403,  # Expecting forbidden
+                data=valid_config
+            )
+            
+            # Try to update database config
+            update_success, _ = self.run_test(
+                "Update database config with non-admin user (should fail)",
+                "POST",
+                "admin/database/update",
+                403,  # Expecting forbidden
+                data=update_config
+            )
+            
+            # Try to get database status
+            status_success, _ = self.run_test(
+                "Get database status with non-admin user (should fail)",
+                "GET",
+                "admin/database/status",
+                403  # Expecting forbidden
+            )
+            
+            # Restore original token
+            self.token = original_token
+            
+            # All tests should fail with 403 for non-admin users
+            auth_check_working = config_success and test_success and update_success and status_success
+            if auth_check_working:
+                print("✅ Database management endpoints correctly restrict access to admin users only")
+            else:
+                print("❌ Database management endpoints do not properly restrict access")
+        else:
+            print(f"❌ Failed to login with non-admin user '{non_admin_username}', skipping auth check")
+            auth_check_working = False
+        
+        # Return overall status
+        return {
+            "db_config": db_config_working,
+            "db_test_valid": db_test_valid_working,
+            "db_test_invalid": db_test_invalid_working,
+            "db_status": db_status_working,
+            "db_update": db_update_working,
+            "auth_check": auth_check_working
+        }
+    
     # Event Management Tests
     def test_update_event(self, event_id, event_data):
         """Test updating an emergency event"""

@@ -14,10 +14,18 @@ const InventoryManagement = ({
   loading,
   setLoading,
   API_BASE_URL,
-  inventoryCategories = [] // Add categories prop
+  inventoryCategories = [], // Add categories prop
+  // Category management functions
+  createInventoryCategory,
+  updateInventoryCategory,
+  deleteInventoryCategory,
+  loadInventoryCategories
 }) => {
   const [editingItem, setEditingItem] = useState(null);
   const [currentView, setCurrentView] = useState('list'); // list, create, edit
+  const [showAddCategory, setShowAddCategory] = useState(false);
+  const [editingCategory, setEditingCategory] = useState(null);
+  const [categoryForm, setCategoryForm] = useState({ name: '', description: '', icon: '' });
 
   // Icons
   const PlusIcon = () => (

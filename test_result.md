@@ -213,15 +213,18 @@ frontend:
         
   - task: "Inventory category management functionality"
     implemented: true
-    working: "NA"
+    working: true
     file: "/app/frontend/src/components/InventoryManagement.js"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
         comment: "Implemented enhanced inventory category management functionality that allows admins to add, modify, and delete categories directly from the inventory interface. Added a green '+' button next to the category dropdown in the inventory form and a 'Gestisci Categorie' button in the filters section for admins. Created a category management modal with full interface for creating, editing, and deleting categories with icons and descriptions."
+      - working: true
+        agent: "testing"
+        comment: "Verified inventory category management functionality. The 'Gestisci Categorie' button is visible in the filters section for admin users only. The green '+' button is visible next to the category dropdown in the inventory form for admin users only. Both buttons open the category management modal correctly. The modal displays existing categories with their icons and descriptions. Non-admin users (tested with operator role) do not have access to the category management functionality. Access control is working properly, restricting category management to admin users only."
 
 metadata:
   created_by: "main_agent"

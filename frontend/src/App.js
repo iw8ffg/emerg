@@ -1413,19 +1413,168 @@ function App() {
 
         {/* User Management View (Admin Only) */}
         {currentView === 'admin' && (
-          <UserManagement
-            token={token}
-            users={users}
-            setUsers={setUsers}
-            userForm={userForm}
-            setUserForm={setUserForm}
-            user={user}
-            setError={setError}
-            setSuccess={setSuccess}
-            loading={loading}
-            setLoading={setLoading}
-            API_BASE_URL={API_BASE_URL}
-          />
+          <div className="space-y-6">
+            <UserManagement
+              token={token}
+              users={users}
+              setUsers={setUsers}
+              userForm={userForm}
+              setUserForm={setUserForm}
+              user={user}
+              setError={setError}
+              setSuccess={setSuccess}
+              loading={loading}
+              setLoading={setLoading}
+              API_BASE_URL={API_BASE_URL}
+            />
+            
+            {/* Permissions Management */}
+            <div className="bg-white rounded-lg shadow">
+              <div className="px-6 py-4 border-b border-gray-200">
+                <div className="flex justify-between items-center">
+                  <h3 className="text-lg font-medium text-gray-900">Gestione Permessi</h3>
+                  <button
+                    onClick={() => setShowPermissionsModal(true)}
+                    className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700"
+                  >
+                    <AdminIcon className="h-4 w-4" />
+                    <span>Modifica Permessi</span>
+                  </button>
+                </div>
+              </div>
+              <div className="px-6 py-4">
+                {Object.keys(roles).length === 0 ? (
+                  <p className="text-gray-500">Caricamento permessi...</p>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {Object.entries(roles).map(([roleKey, roleName]) => (
+                      <div key={roleKey} className="border border-gray-200 rounded-lg p-4">
+                        <div className="flex items-center justify-between mb-3">
+                          <h4 className="font-medium text-gray-900">{roleName}</h4>
+                          <button
+                            onClick={() => {
+                              setSelectedRole(roleKey);
+                              loadRolePermissions(roleKey);
+                              setShowPermissionsModal(true);
+                            }}
+                            className="text-blue-600 hover:text-blue-800"
+                          >
+                            <EditIcon className="h-4 w-4" />
+                          </button>
+                        </div>
+                        <div className="space-y-1">
+                          {(currentPermissions[roleKey] || []).map((permission) => (
+                            <span key={permission} className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded mr-1 mb-1">
+                              {permission}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Permissions Modal */}
+        {showPermissionsModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="px-6 py-4 border-b border-gray-200">
+                <div className="flex justify-between items-center">
+                  <h3 className="text-lg font-medium text-gray-900">
+                    Modifica Permessi - {selectedRole ? roles[selectedRole] : 'Seleziona Ruolo'}
+                  </h3>
+                  <button
+                    onClick={() => {
+                      setShowPermissionsModal(false);
+                      setSelectedRole('');
+                      setRolePermissions([]);
+                    }}
+                    className="text-gray-400 hover:text-gray-600"
+                  >
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+              
+              <div className="px-6 py-4">
+                {!selectedRole ? (
+                  <div className="space-y-4">
+                    <p className="text-gray-600">Seleziona un ruolo per modificare i permessi:</p>
+                    <div className="grid grid-cols-1 gap-3">
+                      {Object.entries(roles).map(([roleKey, roleName]) => (
+                        <button
+                          key={roleKey}
+                          onClick={() => {
+                            setSelectedRole(roleKey);
+                            loadRolePermissions(roleKey);
+                          }}
+                          className="p-3 text-left border border-gray-300 rounded-md hover:bg-gray-50"
+                        >
+                          <div className="font-medium">{roleName}</div>
+                          <div className="text-sm text-gray-500">
+                            {(currentPermissions[roleKey] || []).length} permessi attivi
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <p className="text-gray-600">
+                      Seleziona i permessi per il ruolo <strong>{roles[selectedRole]}</strong>:
+                    </p>
+                    <div className="grid grid-cols-1 gap-3 max-h-96 overflow-y-auto">
+                      {allPermissions.map((permission) => (
+                        <label key={permission} className="flex items-center space-x-3">
+                          <input
+                            type="checkbox"
+                            checked={rolePermissions.includes(permission)}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setRolePermissions([...rolePermissions, permission]);
+                              } else {
+                                setRolePermissions(rolePermissions.filter(p => p !== permission));
+                              }
+                            }}
+                            className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                          />
+                          <span className="text-sm text-gray-700">{permission}</span>
+                        </label>
+                      ))}
+                    </div>
+                    <div className="flex justify-end space-x-3 pt-4 border-t">
+                      <button
+                        onClick={() => {
+                          setSelectedRole('');
+                          setRolePermissions([]);
+                        }}
+                        className="px-4 py-2 text-gray-600 hover:text-gray-800"
+                      >
+                        Indietro
+                      </button>
+                      <button
+                        onClick={() => {
+                          updateRolePermissions(selectedRole, rolePermissions);
+                          setShowPermissionsModal(false);
+                          setSelectedRole('');
+                          setRolePermissions([]);
+                        }}
+                        className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                      >
+                        Salva Permessi
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
         )}
 
         {/* Operational Logs View */}

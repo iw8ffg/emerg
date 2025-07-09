@@ -210,6 +210,18 @@ frontend:
       - working: true
         agent: "testing"
         comment: "Verified event modification functionality. Edit buttons appear for each event in the list. Clicking edit opens a form pre-populated with event data. Form fields can be modified, including title, description, and other properties. Cancel button returns to event list without saving. There was a minor issue with dropdown selection in the form, but it doesn't prevent the core functionality from working."
+        
+  - task: "Inventory category management functionality"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/components/InventoryManagement.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Implemented enhanced inventory category management functionality that allows admins to add, modify, and delete categories directly from the inventory interface. Added a green '+' button next to the category dropdown in the inventory form and a 'Gestisci Categorie' button in the filters section for admins. Created a category management modal with full interface for creating, editing, and deleting categories with icons and descriptions."
 
 metadata:
   created_by: "main_agent"

@@ -1392,12 +1392,47 @@ def main():
         "icon": "🧪"
     }
     
-    # Note: We're experiencing a 500 error due to MongoDB ObjectId serialization issues
-    # This is a known issue when returning MongoDB documents directly
-    # For testing purposes, we'll skip the creation test but continue with other tests
-    print("⚠️ Skipping inventory category creation test due to known MongoDB ObjectId serialization issue")
-    print("✅ Inventory categories functionality is implemented but has serialization issues")
-    category_id = "test_category_id"  # Use a dummy ID for testing
+    category_id = tester.test_create_inventory_category(new_category)
+    if category_id:
+        print(f"✅ Successfully created new inventory category with ID: {category_id}")
+        
+        # Test updating the inventory category
+        print("\n--- Testing PUT /api/inventory-categories/{id} ---")
+        updated_category = {
+            "name": f"updated_{new_category['name']}",
+            "description": "Updated test inventory category",
+            "icon": "🔬"
+        }
+        
+        if tester.test_update_inventory_category(category_id, updated_category):
+            print(f"✅ Successfully updated inventory category with ID: {category_id}")
+            
+            # Verify the update
+            success, response = tester.run_test(
+                f"Get updated inventory category {category_id}",
+                "GET",
+                f"inventory-categories",
+                200
+            )
+            
+            if success:
+                # Find the updated category in the list
+                updated_cat = next((cat for cat in response if cat.get("id") == category_id), None)
+                if updated_cat and updated_cat.get("name") == updated_category["name"]:
+                    print("✅ Inventory category was correctly updated in the database")
+                else:
+                    print("❌ Inventory category was not correctly updated in the database")
+            
+            # Test deleting the custom inventory category
+            print("\n--- Testing DELETE /api/inventory-categories/{id} ---")
+            if tester.test_delete_inventory_category(category_id):
+                print(f"✅ Successfully deleted custom inventory category with ID: {category_id}")
+            else:
+                print(f"❌ Failed to delete custom inventory category with ID: {category_id}")
+        else:
+            print(f"❌ Failed to update inventory category with ID: {category_id}")
+    else:
+        print("❌ Failed to create new inventory category")
     
     # Test inventory category management with non-admin user
     print("\n--- Testing inventory category management with non-admin user ---")

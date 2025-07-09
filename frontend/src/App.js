@@ -249,6 +249,9 @@ function App() {
         setUser(data.user);
         setSuccess('Login effettuato con successo!');
         loadDashboardData();
+        if (data.user.role === 'admin') {
+          loadPermissions();
+        }
       } else {
         setError(data.detail || 'Errore durante il login');
       }

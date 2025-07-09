@@ -14,6 +14,19 @@ class EmergencySystemAPITester:
         self.created_events = []
         self.created_inventory_items = []
         self.created_users = []
+        
+        # Print the base URL being used
+        print(f"Using API base URL: {self.base_url}")
+        
+        # Test the base URL with a health check
+        try:
+            response = requests.get(f"{self.base_url}/api/health")
+            if response.status_code == 200:
+                print(f"✅ API is accessible at {self.base_url}")
+            else:
+                print(f"⚠️ API returned status code {response.status_code} at {self.base_url}")
+        except Exception as e:
+            print(f"⚠️ Error connecting to API at {self.base_url}: {str(e)}")
 
     def run_test(self, name, method, endpoint, expected_status, data=None, headers=None):
         """Run a single API test"""

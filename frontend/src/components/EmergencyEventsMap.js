@@ -208,13 +208,11 @@ const EmergencyEventsMap = ({
                 className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
               >
                 <option value="">Tutti i Tipi</option>
-                <option value="incendio">Incendio</option>
-                <option value="alluvione">Alluvione</option>
-                <option value="terremoto">Terremoto</option>
-                <option value="incidente_stradale">Incidente Stradale</option>
-                <option value="emergenza_medica">Emergenza Medica</option>
-                <option value="blackout">Blackout</option>
-                <option value="altro">Altro</option>
+                {eventTypes.map((type) => (
+                  <option key={type.id} value={type.name}>
+                    {type.name.charAt(0).toUpperCase() + type.name.slice(1).replace('_', ' ')}
+                  </option>
+                ))}
               </select>
             </div>
             

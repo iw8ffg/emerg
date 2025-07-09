@@ -1781,6 +1781,196 @@ function App() {
                 </div>
               </form>
             </div>
+            
+            {/* Inventory Categories Management */}
+            <div className="bg-white rounded-lg shadow">
+              <div className="px-6 py-4 border-b border-gray-200">
+                <div className="flex justify-between items-center">
+                  <h3 className="text-lg font-medium text-gray-900">Gestione Categorie Inventario</h3>
+                  <button
+                    onClick={() => setShowAddInventoryCategory(true)}
+                    className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-md text-sm hover:bg-green-700"
+                  >
+                    <PlusIcon />
+                    <span>Nuova Categoria</span>
+                  </button>
+                </div>
+              </div>
+              
+              <div className="px-6 py-4">
+                {/* Quick Add Form */}
+                {showAddInventoryCategory && (
+                  <div className="mb-6 p-4 bg-green-50 rounded-lg">
+                    <form onSubmit={createInventoryCategory} className="space-y-4">
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Nome Categoria *
+                          </label>
+                          <input
+                            type="text"
+                            value={inventoryCategoryForm.name}
+                            onChange={(e) => setInventoryCategoryForm({ ...inventoryCategoryForm, name: e.target.value })}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                            placeholder="es. elettronica"
+                            required
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Icona
+                          </label>
+                          <input
+                            type="text"
+                            value={inventoryCategoryForm.icon}
+                            onChange={(e) => setInventoryCategoryForm({ ...inventoryCategoryForm, icon: e.target.value })}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                            placeholder="📱"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Descrizione
+                          </label>
+                          <input
+                            type="text"
+                            value={inventoryCategoryForm.description}
+                            onChange={(e) => setInventoryCategoryForm({ ...inventoryCategoryForm, description: e.target.value })}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                            placeholder="Descrizione della categoria"
+                          />
+                        </div>
+                      </div>
+                      <div className="flex justify-end space-x-3">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShowAddInventoryCategory(false);
+                            setInventoryCategoryForm({ name: '', description: '', icon: '' });
+                          }}
+                          className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+                        >
+                          Annulla
+                        </button>
+                        <button
+                          type="submit"
+                          disabled={loading}
+                          className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 disabled:bg-gray-400"
+                        >
+                          {loading ? 'Creazione...' : 'Crea Categoria'}
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                )}
+
+                {/* Edit Form */}
+                {editingInventoryCategory && (
+                  <div className="mb-6 p-4 bg-yellow-50 rounded-lg">
+                    <form onSubmit={updateInventoryCategory} className="space-y-4">
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Nome Categoria *
+                          </label>
+                          <input
+                            type="text"
+                            value={inventoryCategoryForm.name}
+                            onChange={(e) => setInventoryCategoryForm({ ...inventoryCategoryForm, name: e.target.value })}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                            required
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Icona
+                          </label>
+                          <input
+                            type="text"
+                            value={inventoryCategoryForm.icon}
+                            onChange={(e) => setInventoryCategoryForm({ ...inventoryCategoryForm, icon: e.target.value })}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Descrizione
+                          </label>
+                          <input
+                            type="text"
+                            value={inventoryCategoryForm.description}
+                            onChange={(e) => setInventoryCategoryForm({ ...inventoryCategoryForm, description: e.target.value })}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                          />
+                        </div>
+                      </div>
+                      <div className="flex justify-end space-x-3">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEditingInventoryCategory(null);
+                            setInventoryCategoryForm({ name: '', description: '', icon: '' });
+                          }}
+                          className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+                        >
+                          Annulla
+                        </button>
+                        <button
+                          type="submit"
+                          disabled={loading}
+                          className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-yellow-600 hover:bg-yellow-700 disabled:bg-gray-400"
+                        >
+                          {loading ? 'Aggiornamento...' : 'Aggiorna Categoria'}
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                )}
+
+                {/* Categories List */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {inventoryCategories.map((category) => (
+                    <div key={category.id} className="border border-gray-200 rounded-lg p-4">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center space-x-2">
+                          <span className="text-2xl">{category.icon}</span>
+                          <h4 className="font-medium text-gray-900">
+                            {category.name.charAt(0).toUpperCase() + category.name.slice(1)}
+                          </h4>
+                        </div>
+                        <div className="flex items-center space-x-1">
+                          <button
+                            onClick={() => {
+                              setEditingInventoryCategory(category);
+                              setInventoryCategoryForm({
+                                name: category.name,
+                                description: category.description || '',
+                                icon: category.icon || ''
+                              });
+                            }}
+                            className="p-1 bg-yellow-600 text-white rounded text-xs hover:bg-yellow-700"
+                          >
+                            <EditIcon className="h-3 w-3" />
+                          </button>
+                          <button
+                            onClick={() => deleteInventoryCategory(category.id)}
+                            className="p-1 bg-red-600 text-white rounded text-xs hover:bg-red-700"
+                          >
+                            <DeleteIcon className="h-3 w-3" />
+                          </button>
+                        </div>
+                      </div>
+                      {category.description && (
+                        <p className="text-sm text-gray-600 mb-2">{category.description}</p>
+                      )}
+                      <p className="text-xs text-gray-500">
+                        Creato da: {category.created_by} • {new Date(category.created_at).toLocaleString()}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
           </div>
         )}
 

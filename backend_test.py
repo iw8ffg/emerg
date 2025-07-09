@@ -1066,20 +1066,34 @@ class EmergencySystemAPITester:
             print(f"Created new: {response.get('created_new')}")
             db_update_working = True
             
-            # Switch back to original database
-            original_config = {
-                "mongo_url": "mongodb://localhost:27017",
-                "database_name": "emergency_management",
-                "test_connection": True,
-                "create_if_not_exists": False
-            }
-            self.run_test(
-                "Switch back to original database",
-                "POST",
-                "admin/database/update",
-                200,
-                data=original_config
-            )
+            # We need to login again after switching databases
+            print("\n--- Re-authenticating after database switch ---")
+            if self.test_login("admin", "admin123"):
+                print("✅ Successfully re-authenticated after database switch")
+                
+                # Switch back to original database
+                original_config = {
+                    "mongo_url": "mongodb://localhost:27017",
+                    "database_name": "emergency_management",
+                    "test_connection": True,
+                    "create_if_not_exists": False
+                }
+                switch_back_success, _ = self.run_test(
+                    "Switch back to original database",
+                    "POST",
+                    "admin/database/update",
+                    200,
+                    data=original_config
+                )
+                
+                if switch_back_success:
+                    print("✅ Successfully switched back to original database")
+                    # Login again after switching back
+                    self.test_login("testadmin", "testadmin123")
+                else:
+                    print("❌ Failed to switch back to original database")
+            else:
+                print("❌ Failed to re-authenticate after database switch")
         else:
             print("❌ Database update endpoint failed")
             db_update_working = False
@@ -1090,9 +1104,26 @@ class EmergencySystemAPITester:
         # Save current token
         original_token = self.token
         
-        # Create or use existing non-admin user
-        non_admin_username = "testoperator"
-        non_admin_password = "testoperator123"
+        # Create a non-admin user for testing if it doesn't exist
+        non_admin_username = "db_test_operator"
+        non_admin_password = "operator123"
+        
+        # Try to register a new non-admin user
+        register_data = {
+            "username": non_admin_username,
+            "email": "db_test_operator@example.com",
+            "password": non_admin_password,
+            "role": "operator",
+            "full_name": "Database Test Operator"
+        }
+        
+        self.run_test(
+            "Register test operator user for database testing",
+            "POST",
+            "auth/register",
+            200,  # We don't care if it succeeds or fails with 400 (already exists)
+            data=register_data
+        )
         
         # Try to login with non-admin user
         success, response = self.run_test(

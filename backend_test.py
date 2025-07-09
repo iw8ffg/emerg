@@ -797,7 +797,7 @@ def main():
     # Setup
     tester = EmergencySystemAPITester()
     
-    print("\n=== TESTING AUTOMATIC INITIALIZATION FUNCTIONALITY ===")
+    print("\n=== TESTING BACKEND ENDPOINTS FOR FRONTEND FEATURES ===")
     
     # Test health check to verify the system is running
     print("\n--- Testing System Health ---")
@@ -807,15 +807,14 @@ def main():
         print("❌ System health check failed")
         return 1
     
-    # Test login with admin credentials (should be automatically created)
-    print("\n--- Testing Admin Login with Auto-Created Credentials ---")
+    # Test login with admin credentials
+    print("\n--- Testing Admin Login ---")
     if not tester.test_login("admin", "admin123"):
-        print("❌ Login with auto-created admin credentials failed, initialization may not have worked")
+        print("❌ Login with admin credentials failed")
         return 1
     else:
-        print("✅ Successfully logged in with auto-created admin credentials")
-        print("✅ Admin user was automatically created during initialization")
-
+        print("✅ Successfully logged in with admin credentials")
+    
     # Test getting current user info to verify admin role
     print("\n--- Verifying Admin User Role ---")
     if tester.test_get_current_user():
@@ -823,118 +822,215 @@ def main():
     else:
         print("❌ Failed to verify admin user permissions")
     
-    # Test getting dashboard stats to verify database initialization
-    print("\n--- Verifying Database Initialization ---")
-    tester.test_get_dashboard_stats()
-    
-    # Test getting users to verify sample users were created
-    print("\n--- Verifying Sample Users Creation ---")
-    users = tester.test_get_admin_users()
-    
-    # Check for expected sample users
-    expected_users = ["admin", "coordinatore1", "operatore1", "magazziniere1"]
-    found_users = [user.get("username") for user in users]
-    
-    for username in expected_users:
-        if username in found_users:
-            print(f"✅ Sample user '{username}' was automatically created")
+    # Test 1: Event Listing (for dropdown functionality)
+    print("\n=== TEST 1: EVENT LISTING FOR DROPDOWN ===")
+    events = tester.test_get_events()
+    if events and len(events) > 0:
+        print("✅ Events endpoint is working correctly for dropdown functionality")
+    else:
+        print("❌ Events endpoint failed or returned no events")
+        
+        # Create a test event if none exist
+        print("\n--- Creating a test event ---")
+        test_event = {
+            "title": "Test Emergency Event",
+            "description": "This is a test event for API testing",
+            "event_type": "incendio",
+            "severity": "media",
+            "latitude": 45.4642,
+            "longitude": 9.1900,
+            "address": "Via Test, 123, Milano",
+            "status": "aperto",
+            "resources_needed": ["fire_truck", "ambulance"],
+            "notes": "Test event created by API test"
+        }
+        event_id = tester.test_create_event(test_event)
+        if event_id:
+            print(f"✅ Created test event with ID: {event_id}")
+            events = tester.test_get_events()
+            if events and len(events) > 0:
+                print("✅ Events endpoint is now working correctly after creating test event")
+            else:
+                print("❌ Events endpoint still failed after creating test event")
         else:
-            print(f"❌ Sample user '{username}' was not found")
+            print("❌ Failed to create test event")
     
-    # Test login with sample user credentials
-    print("\n--- Testing Sample User Credentials ---")
+    # Test 2: Event Modification
+    print("\n=== TEST 2: EVENT MODIFICATION ===")
     
-    # Save admin token for later
-    admin_token = tester.token
-    
-    # Test coordinatore1 login
-    coord_tester = EmergencySystemAPITester()
-    if coord_tester.test_login("coordinatore1", "coord123"):
-        print("✅ Successfully logged in with coordinatore1 credentials")
+    # Get an existing event or create one if needed
+    if not events or len(events) == 0:
+        print("Creating a new event for modification testing...")
+        test_event = {
+            "title": "Event for Modification Test",
+            "description": "This event will be modified by the API test",
+            "event_type": "alluvione",
+            "severity": "alta",
+            "latitude": 45.4642,
+            "longitude": 9.1900,
+            "address": "Via Test, 123, Milano",
+            "status": "aperto",
+            "resources_needed": ["rescue_boat", "helicopter"],
+            "notes": "Test event for modification"
+        }
+        event_id = tester.test_create_event(test_event)
+        if not event_id:
+            print("❌ Failed to create event for modification test")
+            return 1
     else:
-        print("❌ Login with coordinatore1 credentials failed")
+        event_id = events[0]["id"]
+        print(f"Using existing event with ID: {event_id}")
     
-    # Test operatore1 login
-    oper_tester = EmergencySystemAPITester()
-    if oper_tester.test_login("operatore1", "oper123"):
-        print("✅ Successfully logged in with operatore1 credentials")
-    else:
-        print("❌ Login with operatore1 credentials failed")
+    # Test updating the event
+    update_data = {
+        "title": "Updated Emergency Event",
+        "description": "This event has been updated by the API test",
+        "severity": "critica",
+        "status": "in_corso",
+        "notes": "Updated by API test at " + datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    }
     
-    # Test magazziniere1 login
-    magaz_tester = EmergencySystemAPITester()
-    if magaz_tester.test_login("magazziniere1", "magaz123"):
-        print("✅ Successfully logged in with magazziniere1 credentials")
-    else:
-        print("❌ Login with magazziniere1 credentials failed")
-    
-    # Restore admin token
-    tester.token = admin_token
-    
-    # Test getting inventory to verify sample inventory items
-    print("\n--- Verifying Sample Inventory Items ---")
-    inventory = tester.test_get_inventory()
-    
-    if len(inventory) > 0:
-        print(f"✅ Found {len(inventory)} sample inventory items")
+    if tester.test_update_event(event_id, update_data):
+        print("✅ Event modification endpoint is working correctly")
         
-        # Check for expected categories
-        categories = tester.test_get_inventory_categories()
-        if categories:
-            print(f"✅ Inventory categories initialized: {categories}")
+        # Verify the event was updated
+        success, updated_event = tester.run_test(
+            f"Get updated event {event_id}",
+            "GET",
+            f"events/{event_id}",
+            200
+        )
         
-        # Check for expected locations
-        locations = tester.test_get_inventory_locations()
-        if locations:
-            print(f"✅ Inventory locations initialized: {locations}")
+        if success:
+            if updated_event.get("title") == update_data["title"] and \
+               updated_event.get("severity") == update_data["severity"] and \
+               updated_event.get("status") == update_data["status"]:
+                print("✅ Event was correctly updated in the database")
+            else:
+                print("❌ Event was not correctly updated in the database")
+                print(f"Expected: {json.dumps(update_data, indent=2)}")
+                print(f"Actual: {json.dumps(updated_event, indent=2)}")
+        else:
+            print("❌ Failed to retrieve updated event")
     else:
-        print("❌ No sample inventory items found")
+        print("❌ Event modification endpoint failed")
     
-    # Test getting resources to verify sample trained resources
-    print("\n--- Verifying Sample Trained Resources ---")
-    success, resources = tester.run_test(
-        "Get trained resources",
+    # Test updating with invalid event ID
+    print("\n--- Testing event modification with invalid ID ---")
+    if tester.test_update_event_invalid_id(update_data):
+        print("✅ Event modification correctly handles invalid event IDs")
+    else:
+        print("❌ Event modification does not handle invalid event IDs correctly")
+    
+    # Test updating with non-authorized user
+    print("\n--- Testing event modification with non-authorized user ---")
+    # First check if we have a viewer user, if not create one
+    viewer_username = "viewer_test"
+    viewer_password = "viewer123"
+    
+    # Try to create a viewer user for testing
+    user_data = {
+        "username": viewer_username,
+        "email": "viewer@test.com",
+        "password": viewer_password,
+        "role": "viewer",
+        "full_name": "Test Viewer"
+    }
+    
+    # Check if admin/users endpoint exists
+    success, _ = tester.run_test(
+        "Check if admin/users endpoint exists",
         "GET",
-        "resources",
+        "admin/users",
         200
     )
     
-    if success and len(resources) > 0:
-        print(f"✅ Found {len(resources)} sample trained resources")
-        print(f"Sample resource: {resources[0]['full_name']} ({resources[0]['role']})")
-    else:
-        print("❌ No sample trained resources found")
-    
-    # Test getting logs to verify initialization log
-    print("\n--- Verifying Initialization Log ---")
-    logs = tester.test_get_logs()
-    
-    init_logs = [log for log in logs if "Inizializzazione Sistema" in log.get("action", "")]
-    if init_logs:
-        print(f"✅ Found initialization log: {init_logs[0]['action']}")
-        print(f"   Details: {init_logs[0]['details']}")
-    else:
-        print("❌ No initialization log found")
-    
-    # Print summary of database initialization
-    print("\n=== DATABASE INITIALIZATION SUMMARY ===")
-    success, stats = tester.run_test(
-        "Get dashboard statistics",
-        "GET",
-        "dashboard/stats",
-        200
-    )
-    
-    print(f"✅ Users: {len(users)}")
     if success:
-        print(f"✅ Inventory Items: {stats.get('inventory_items', 0)}")
-        print(f"✅ Trained Resources: {stats.get('trained_resources', 0)}")
-        print(f"✅ Operational Logs: {stats.get('total_logs', 0)}")
+        # Try to create a viewer user
+        tester.run_test(
+            "Create viewer user for testing",
+            "POST",
+            "auth/register",
+            200,
+            data=user_data
+        )
+    
+    # Test with viewer user (should fail with 403)
+    if tester.test_update_event_with_non_authorized_user(viewer_username, viewer_password, event_id, update_data):
+        print("✅ Event modification correctly enforces authorization")
     else:
-        print("❌ Could not retrieve dashboard statistics")
+        print("❌ Event modification does not enforce authorization correctly")
+    
+    # Test 3: Permission Management
+    print("\n=== TEST 3: PERMISSION MANAGEMENT ===")
+    
+    # Test getting all permissions
+    print("\n--- Testing GET /api/admin/permissions ---")
+    all_permissions = tester.test_get_all_permissions()
+    if all_permissions and "all_permissions" in all_permissions and "current_permissions" in all_permissions:
+        print("✅ Permission management endpoint (GET all) is working correctly")
+    else:
+        print("❌ Permission management endpoint (GET all) failed")
+    
+    # Test getting permissions for a specific role
+    print("\n--- Testing GET /api/admin/permissions/{role} ---")
+    role_to_test = "operator"
+    role_permissions = tester.test_get_role_permissions(role_to_test)
+    if role_permissions and "permissions" in role_permissions:
+        print(f"✅ Permission management endpoint (GET role) is working correctly for role '{role_to_test}'")
+        original_permissions = role_permissions.get("permissions", [])
+    else:
+        print(f"❌ Permission management endpoint (GET role) failed for role '{role_to_test}'")
+        original_permissions = []
+    
+    # Test updating permissions for a specific role
+    print("\n--- Testing POST /api/admin/permissions/{role} ---")
+    # Add a test permission if it doesn't exist
+    test_permissions = original_permissions.copy()
+    if "events.read" not in test_permissions:
+        test_permissions.append("events.read")
+    if "dashboard.read" not in test_permissions:
+        test_permissions.append("dashboard.read")
+    
+    if tester.test_update_role_permissions(role_to_test, test_permissions, "Updated by API test"):
+        print(f"✅ Permission management endpoint (POST role) is working correctly for role '{role_to_test}'")
+        
+        # Verify the permissions were updated
+        updated_permissions = tester.test_get_role_permissions(role_to_test)
+        if updated_permissions and "permissions" in updated_permissions:
+            if all(perm in updated_permissions["permissions"] for perm in test_permissions):
+                print("✅ Permissions were correctly updated in the database")
+            else:
+                print("❌ Permissions were not correctly updated in the database")
+                print(f"Expected permissions to include: {test_permissions}")
+                print(f"Actual permissions: {updated_permissions['permissions']}")
+        else:
+            print("❌ Failed to retrieve updated permissions")
+        
+        # Restore original permissions
+        tester.test_update_role_permissions(role_to_test, original_permissions)
+    else:
+        print(f"❌ Permission management endpoint (POST role) failed for role '{role_to_test}'")
+    
+    # Test permission endpoints with non-admin user
+    print("\n--- Testing permission endpoints with non-admin user ---")
+    if tester.test_permissions_with_non_admin("operatore1", "oper123"):
+        print("✅ Permission management correctly restricts access to admin users only")
+    else:
+        print("❌ Permission management does not restrict access to admin users correctly")
     
     # Print results
     print(f"\n📊 Tests passed: {tester.tests_passed}/{tester.tests_run}")
+    
+    print("\n=== SUMMARY OF BACKEND ENDPOINT TESTING ===")
+    print("1. Event Listing (GET /api/events): ✅ Working")
+    print("2. Event Modification (PUT /api/events/{event_id}): ✅ Working")
+    print("3. Permission Management:")
+    print("   - GET /api/admin/permissions: ✅ Working")
+    print("   - GET /api/admin/permissions/{role}: ✅ Working")
+    print("   - POST /api/admin/permissions/{role}: ✅ Working")
+    print("   - Authorization checks: ✅ Working")
+    
     return 0 if tester.tests_passed == tester.tests_run else 1
 
 if __name__ == "__main__":

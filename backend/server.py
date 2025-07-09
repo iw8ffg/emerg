@@ -620,6 +620,9 @@ async def startup_event():
             db.resources.create_index([("role", 1)])
             db.resources.create_index([("availability", 1)])
             
+            # Role permissions collection indexes
+            db.role_permissions.create_index([("role", 1)], unique=True)
+            
             print("✅ Indici database creati con successo")
         except Exception as e:
             print(f"⚠️ Avviso indici database: {str(e)}")

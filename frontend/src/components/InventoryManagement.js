@@ -450,14 +450,11 @@ const InventoryManagement = ({
               className="px-3 py-2 border border-gray-300 rounded-md text-sm"
             >
               <option value="">Tutte le categorie</option>
-              <option value="attrezzature">Attrezzature</option>
-              <option value="medicinali">Medicinali</option>
-              <option value="alimentari">Alimentari</option>
-              <option value="vestiario">Vestiario</option>
-              <option value="comunicazione">Comunicazione</option>
-              <option value="energia">Energia</option>
-              <option value="trasporti">Trasporti</option>
-              <option value="altro">Altro</option>
+              {inventoryCategories.map((category) => (
+                <option key={category.id} value={category.name}>
+                  {category.icon} {category.name.charAt(0).toUpperCase() + category.name.slice(1)}
+                </option>
+              ))}
             </select>
             
             <input

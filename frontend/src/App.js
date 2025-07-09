@@ -1509,6 +1509,7 @@ function App() {
             setError={setError}
             setSuccess={setSuccess}
             API_BASE_URL={API_BASE_URL}
+            eventTypes={eventTypes}
           />
         )}
 

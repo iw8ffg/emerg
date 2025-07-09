@@ -991,12 +991,7 @@ async def get_inventory(
     
     return items
 
-@app.get("/api/inventory/{item_id}")
-async def get_inventory_item(item_id: str, current_user: dict = Depends(get_current_user)):
-    item = db.inventory.find_one({"id": item_id}, {"_id": 0})
-    if not item:
-        raise HTTPException(status_code=404, detail="Articolo non trovato")
-    return item
+
 
 @app.put("/api/inventory/{item_id}")
 async def update_inventory_item(item_id: str, item: InventoryItem, current_user: dict = Depends(get_current_user)):

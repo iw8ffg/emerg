@@ -691,40 +691,56 @@ function App() {
               Dashboard
             </button>
             
-            <button
-              onClick={() => setCurrentView('events')}
-              className={`py-4 px-2 border-b-2 font-medium text-sm ${
-                currentView === 'events' 
-                  ? 'border-blue-500 text-blue-600' 
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              Eventi di Emergenza
-            </button>
-            
-            <button
-              onClick={() => setCurrentView('map')}
-              className={`py-4 px-2 border-b-2 font-medium text-sm ${
-                currentView === 'map' 
-                  ? 'border-blue-500 text-blue-600' 
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              Mappa Eventi
-            </button>
-            
-            {canAccess(['admin', 'coordinator', 'operator']) && (
+            {/* Events Dropdown */}
+            <div className="relative">
               <button
-                onClick={() => setCurrentView('create-event')}
-                className={`py-4 px-2 border-b-2 font-medium text-sm ${
-                  currentView === 'create-event' 
+                onClick={() => setShowEventsMenu(!showEventsMenu)}
+                className={`py-4 px-2 border-b-2 font-medium text-sm flex items-center space-x-1 ${
+                  ['events', 'create-event', 'map'].includes(currentView) 
                     ? 'border-blue-500 text-blue-600' 
                     : 'border-transparent text-gray-500 hover:text-gray-700'
                 }`}
               >
-                Nuovo Evento
+                <span>Eventi</span>
+                <ChevronDownIcon />
               </button>
-            )}
+              
+              {showEventsMenu && (
+                <div className="absolute top-full left-0 mt-1 w-48 bg-white rounded-md shadow-lg border z-50">
+                  <div className="py-1">
+                    <button
+                      onClick={() => {
+                        setCurrentView('events');
+                        setShowEventsMenu(false);
+                      }}
+                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    >
+                      Eventi di Emergenza
+                    </button>
+                    {canAccess(['admin', 'coordinator', 'operator']) && (
+                      <button
+                        onClick={() => {
+                          setCurrentView('create-event');
+                          setShowEventsMenu(false);
+                        }}
+                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      >
+                        Nuovo Evento
+                      </button>
+                    )}
+                    <button
+                      onClick={() => {
+                        setCurrentView('map');
+                        setShowEventsMenu(false);
+                      }}
+                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    >
+                      Mappa Eventi
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
             
             {canAccess(['admin', 'coordinator', 'operator']) && (
               <button

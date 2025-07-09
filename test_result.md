@@ -226,6 +226,51 @@ frontend:
         agent: "testing"
         comment: "Verified inventory category management functionality. The 'Gestisci Categorie' button is visible in the filters section for admin users only. The green '+' button is visible next to the category dropdown in the inventory form for admin users only. Both buttons open the category management modal correctly. The modal displays existing categories with their icons and descriptions. Non-admin users (tested with operator role) do not have access to the category management functionality. Access control is working properly, restricting category management to admin users only."
 
+  - task: "Event Map Filter Enhancement"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/components/EmergencyEventsMap.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Implemented event map filter enhancement to use dynamic event types from the database instead of hardcoded values in the filter dropdown."
+      - working: true
+        agent: "testing"
+        comment: "Verified through code review that the EmergencyEventsMap component receives eventTypes as a prop (line 46) and uses it to populate the dropdown options in the filter (lines 211-215). This confirms that the event map is using dynamic event types from the database instead of hardcoded values."
+
+  - task: "Operational Log Event Display"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/App.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Implemented operational log event display to show event names/titles instead of just event IDs when an event is linked to a log entry."
+      - working: true
+        agent: "testing"
+        comment: "Verified through code review that the getEventTitle function (lines 873-877) is used to display event names instead of IDs. This function looks up the event by ID in the events array and returns the event title. It's used in the operational log display (line 2457) where it shows 'Evento collegato: {getEventTitle(log.event_id)}' instead of just showing the ID."
+
+  - task: "Inventory Category Icon Management"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/components/InventoryManagement.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Enhanced inventory category management to allow editing of icons for categories."
+      - working: true
+        agent: "testing"
+        comment: "Verified through code review that the category management modal includes an icon field (lines 534-543) that allows users to input and edit icons. The form includes functions to create, update, and delete categories with icons. The icon field is editable both when creating a new category and when editing an existing one."
+
 metadata:
   created_by: "main_agent"
   version: "1.0"

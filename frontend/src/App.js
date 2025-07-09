@@ -912,6 +912,17 @@ function App() {
                     >
                       Mappa Eventi
                     </button>
+                    {canAccess(['admin', 'coordinator']) && (
+                      <button
+                        onClick={() => {
+                          setCurrentView('event-types');
+                          setShowEventsMenu(false);
+                        }}
+                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      >
+                        Tipi di Evento
+                      </button>
+                    )}
                   </div>
                 </div>
               )}

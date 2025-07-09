@@ -38,6 +38,12 @@ MONGO_URL = os.environ.get('MONGO_URL', 'mongodb://localhost:27017/')
 client = MongoClient(MONGO_URL)
 db = client['emergency_management']
 
+# Global variables for dynamic database management
+current_mongo_url = MONGO_URL
+current_database_name = 'emergency_management'
+current_client = client
+current_db = db
+
 # JWT Configuration
 SECRET_KEY = "emergency_management_secret_key_2025"
 ALGORITHM = "HS256"

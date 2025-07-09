@@ -870,6 +870,12 @@ function App() {
     }
   };
 
+  const getEventTitle = (eventId) => {
+    if (!eventId) return null;
+    const event = events.find(e => e.id === eventId);
+    return event ? event.title : `Evento ${eventId}`;
+  };
+
   const getPriorityColor = (priority) => {
     switch (priority) {
       case 'alta': return 'bg-red-100 text-red-800';

@@ -1503,15 +1503,11 @@ function App() {
                       onChange={(e) => setEventForm({ ...eventForm, event_type: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
-                      <option value="incendio">Incendio</option>
-                      <option value="terremoto">Terremoto</option>
-                      <option value="alluvione">Alluvione</option>
-                      <option value="valanga">Valanga</option>
-                      <option value="frana">Frana</option>
-                      <option value="incidente_stradale">Incidente Stradale</option>
-                      <option value="emergenza_sanitaria">Emergenza Sanitaria</option>
-                      <option value="emergenza_ambientale">Emergenza Ambientale</option>
-                      <option value="altro">Altro</option>
+                      {eventTypes.map((type) => (
+                        <option key={type.id} value={type.name}>
+                          {type.name.charAt(0).toUpperCase() + type.name.slice(1).replace('_', ' ')}
+                        </option>
+                      ))}
                     </select>
                   </div>
                 </div>

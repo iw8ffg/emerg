@@ -236,6 +236,8 @@ function App() {
   useEffect(() => {
     if (user?.role === 'admin') {
       loadPermissions();
+      loadDatabaseConfig();
+      loadDatabaseStatus();
     }
   }, [user]);
 

@@ -2288,6 +2288,158 @@ async def get_admin_stats(current_user: dict = Depends(get_current_user)):
         }
     }
 
+# Database Management endpoints
+@app.get("/api/admin/database/config")
+async def get_database_config(current_user: dict = Depends(get_current_user)):
+    """Get current database configuration (admin only)"""
+    if current_user["role"] != "admin":
+        raise HTTPException(status_code=403, detail="Solo gli amministratori possono accedere alla configurazione del database")
+    
+    return {
+        "mongo_url": current_mongo_url,
+        "database_name": current_database_name,
+        "status": "connected",
+        "collections": db.list_collection_names()
+    }
+
+@app.post("/api/admin/database/test")
+async def test_database_connection_endpoint(config: DatabaseConfig, current_user: dict = Depends(get_current_user)):
+    """Test database connection (admin only)"""
+    if current_user["role"] != "admin":
+        raise HTTPException(status_code=403, detail="Solo gli amministratori possono testare connessioni database")
+    
+    success, message = test_database_connection(config.mongo_url, config.database_name, config.connection_timeout)
+    
+    if success:
+        return {"status": "success", "message": message}
+    else:
+        return {"status": "error", "message": message}
+
+@app.post("/api/admin/database/update")
+async def update_database_config(config: DatabaseConfigUpdate, current_user: dict = Depends(get_current_user)):
+    """Update database configuration and switch connection (admin only)"""
+    if current_user["role"] != "admin":
+        raise HTTPException(status_code=403, detail="Solo gli amministratori possono modificare la configurazione del database")
+    
+    # Log the database change attempt
+    log_data = {
+        "id": str(uuid.uuid4()),
+        "timestamp": datetime.now(),
+        "operator": current_user["username"],
+        "action": f"Tentativo cambio database: {config.database_name}",
+        "details": f"Tentativo di cambio database da {current_database_name} a {config.database_name}",
+        "priority": "alta"
+    }
+    db.logs.insert_one(log_data)
+    
+    # Test connection if requested
+    if config.test_connection:
+        success, message = test_database_connection(config.mongo_url, config.database_name, config.connection_timeout)
+        if not success:
+            return {"status": "error", "message": f"Test connessione fallito: {message}"}
+    
+    try:
+        # Test if database exists and is accessible
+        test_client = MongoClient(config.mongo_url)
+        test_db = test_client[config.database_name]
+        
+        # Check if database exists (has collections)
+        collections = test_db.list_collection_names()
+        database_exists = len(collections) > 0
+        
+        if not database_exists and config.create_if_not_exists:
+            # Initialize new database
+            init_success, init_message = initialize_new_database(test_db)
+            if not init_success:
+                test_client.close()
+                return {"status": "error", "message": f"Errore inizializzazione database: {init_message}"}
+            
+            # Log successful database creation
+            log_data = {
+                "id": str(uuid.uuid4()),
+                "timestamp": datetime.now(),
+                "operator": current_user["username"],
+                "action": f"Database creato e inizializzato: {config.database_name}",
+                "details": f"Nuovo database '{config.database_name}' creato con utente admin di default",
+                "priority": "alta"
+            }
+            # Insert into the new database since we may have switched already
+            test_db.logs.insert_one(log_data)
+        
+        test_client.close()
+        
+        # Switch to new database
+        switch_success, switch_message = switch_database_connection(config.mongo_url, config.database_name)
+        if not switch_success:
+            return {"status": "error", "message": f"Errore cambio database: {switch_message}"}
+        
+        # Log successful database switch
+        log_data = {
+            "id": str(uuid.uuid4()),
+            "timestamp": datetime.now(),
+            "operator": current_user["username"],
+            "action": f"Database cambiato con successo: {config.database_name}",
+            "details": f"Sistema ora connesso al database '{config.database_name}'",
+            "priority": "alta"
+        }
+        db.logs.insert_one(log_data)
+        
+        # Update environment variable for persistence (optional)
+        os.environ['MONGO_URL'] = config.mongo_url
+        
+        return {
+            "status": "success",
+            "message": f"Database aggiornato con successo a: {config.database_name}",
+            "database_name": config.database_name,
+            "collections": db.list_collection_names(),
+            "created_new": not database_exists
+        }
+        
+    except Exception as e:
+        # Log failed database change
+        log_data = {
+            "id": str(uuid.uuid4()),
+            "timestamp": datetime.now(),
+            "operator": current_user["username"],
+            "action": f"Errore cambio database: {config.database_name}",
+            "details": f"Errore durante il cambio database: {str(e)}",
+            "priority": "alta"
+        }
+        db.logs.insert_one(log_data)
+        
+        return {"status": "error", "message": f"Errore durante l'aggiornamento del database: {str(e)}"}
+
+@app.get("/api/admin/database/status")
+async def get_database_status(current_user: dict = Depends(get_current_user)):
+    """Get current database status and statistics (admin only)"""
+    if current_user["role"] != "admin":
+        raise HTTPException(status_code=403, detail="Solo gli amministratori possono accedere allo stato del database")
+    
+    try:
+        # Get database statistics
+        stats = current_client.admin.command("serverStatus")
+        
+        # Get collection statistics
+        collections_stats = {}
+        for collection_name in db.list_collection_names():
+            collections_stats[collection_name] = db[collection_name].count_documents({})
+        
+        return {
+            "status": "connected",
+            "mongo_url": current_mongo_url,
+            "database_name": current_database_name,
+            "server_version": stats.get("version", "Unknown"),
+            "uptime": stats.get("uptime", 0),
+            "collections": collections_stats,
+            "total_documents": sum(collections_stats.values())
+        }
+        
+    except Exception as e:
+        return {
+            "status": "error",
+            "message": f"Errore durante il recupero dello stato del database: {str(e)}"
+        }
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8001)

@@ -486,6 +486,143 @@ const InventoryManagement = ({
     );
   }
 
+  // Categories management modal
+  if (showAddCategory) {
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="px-6 py-4 border-b border-gray-200">
+            <div className="flex justify-between items-center">
+              <h3 className="text-lg font-medium text-gray-900">
+                {editingCategory ? 'Modifica Categoria' : 'Gestione Categorie Inventario'}
+              </h3>
+              <button
+                onClick={() => {
+                  setShowAddCategory(false);
+                  setEditingCategory(null);
+                  setCategoryForm({ name: '', description: '', icon: '' });
+                }}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          </div>
+          
+          <div className="px-6 py-4">
+            {/* Add/Edit Category Form */}
+            <div className="mb-6 p-4 bg-green-50 rounded-lg">
+              <h4 className="font-medium text-gray-900 mb-4">
+                {editingCategory ? 'Modifica Categoria' : 'Nuova Categoria'}
+              </h4>
+              <form onSubmit={editingCategory ? handleUpdateCategory : handleCreateCategory} className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Nome Categoria *
+                    </label>
+                    <input
+                      type="text"
+                      value={categoryForm.name}
+                      onChange={(e) => setCategoryForm({ ...categoryForm, name: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                      placeholder="es. elettronica"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Icona
+                    </label>
+                    <input
+                      type="text"
+                      value={categoryForm.icon}
+                      onChange={(e) => setCategoryForm({ ...categoryForm, icon: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                      placeholder="📱"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Descrizione
+                    </label>
+                    <input
+                      type="text"
+                      value={categoryForm.description}
+                      onChange={(e) => setCategoryForm({ ...categoryForm, description: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                      placeholder="Descrizione della categoria"
+                    />
+                  </div>
+                </div>
+                <div className="flex justify-end space-x-3">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditingCategory(null);
+                      setCategoryForm({ name: '', description: '', icon: '' });
+                    }}
+                    className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+                  >
+                    {editingCategory ? 'Annulla' : 'Pulisci'}
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 disabled:bg-gray-400"
+                  >
+                    {loading ? 'Salvataggio...' : (editingCategory ? 'Aggiorna' : 'Crea Categoria')}
+                  </button>
+                </div>
+              </form>
+            </div>
+
+            {/* Categories List */}
+            <div>
+              <h4 className="font-medium text-gray-900 mb-4">Categorie Esistenti</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {inventoryCategories.map((category) => (
+                  <div key={category.id} className="border border-gray-200 rounded-lg p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center space-x-2">
+                        <span className="text-2xl">{category.icon}</span>
+                        <h5 className="font-medium text-gray-900">
+                          {category.name.charAt(0).toUpperCase() + category.name.slice(1)}
+                        </h5>
+                      </div>
+                      <div className="flex items-center space-x-1">
+                        <button
+                          onClick={() => startEditingCategory(category)}
+                          className="p-1 bg-yellow-600 text-white rounded text-xs hover:bg-yellow-700"
+                        >
+                          <EditIcon className="h-3 w-3" />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteCategory(category.id)}
+                          className="p-1 bg-red-600 text-white rounded text-xs hover:bg-red-700"
+                        >
+                          <DeleteIcon className="h-3 w-3" />
+                        </button>
+                      </div>
+                    </div>
+                    {category.description && (
+                      <p className="text-sm text-gray-600 mb-2">{category.description}</p>
+                    )}
+                    <p className="text-xs text-gray-500">
+                      Creato da: {category.created_by} • {new Date(category.created_at).toLocaleString()}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // Main inventory list view
   return (
     <div className="space-y-6">

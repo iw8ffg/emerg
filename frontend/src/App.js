@@ -1548,6 +1548,80 @@ function App() {
                 )}
               </div>
             </div>
+            
+            {/* Database Management */}
+            <div className="bg-white rounded-lg shadow">
+              <div className="px-6 py-4 border-b border-gray-200">
+                <div className="flex justify-between items-center">
+                  <h3 className="text-lg font-medium text-gray-900">Gestione Database</h3>
+                  <button
+                    onClick={() => setShowDatabaseConfig(true)}
+                    className="flex items-center space-x-2 px-4 py-2 bg-red-600 text-white rounded-md text-sm hover:bg-red-700"
+                  >
+                    <AdminIcon className="h-4 w-4" />
+                    <span>Configura Database</span>
+                  </button>
+                </div>
+              </div>
+              
+              <div className="px-6 py-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <h4 className="font-medium text-gray-900 mb-3">Configurazione Attuale</h4>
+                    <div className="space-y-2 text-sm">
+                      <div>
+                        <span className="font-medium">URL MongoDB:</span>
+                        <span className="ml-2 text-gray-600">{databaseConfig.mongo_url || 'Caricamento...'}</span>
+                      </div>
+                      <div>
+                        <span className="font-medium">Database:</span>
+                        <span className="ml-2 text-gray-600">{databaseConfig.database_name || 'Caricamento...'}</span>
+                      </div>
+                      <div>
+                        <span className="font-medium">Stato:</span>
+                        <span className={`ml-2 px-2 py-1 rounded-full text-xs ${
+                          databaseStatus.status === 'connected' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                        }`}>
+                          {databaseStatus.status === 'connected' ? 'Connesso' : 'Disconnesso'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <h4 className="font-medium text-gray-900 mb-3">Statistiche Database</h4>
+                    <div className="space-y-2 text-sm">
+                      <div>
+                        <span className="font-medium">Versione MongoDB:</span>
+                        <span className="ml-2 text-gray-600">{databaseStatus.server_version || 'N/A'}</span>
+                      </div>
+                      <div>
+                        <span className="font-medium">Collezioni:</span>
+                        <span className="ml-2 text-gray-600">{Object.keys(databaseStatus.collections || {}).length}</span>
+                      </div>
+                      <div>
+                        <span className="font-medium">Documenti totali:</span>
+                        <span className="ml-2 text-gray-600">{databaseStatus.total_documents || 0}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                {Object.keys(databaseStatus.collections || {}).length > 0 && (
+                  <div className="mt-6">
+                    <h4 className="font-medium text-gray-900 mb-3">Dettagli Collezioni</h4>
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                      {Object.entries(databaseStatus.collections || {}).map(([collection, count]) => (
+                        <div key={collection} className="bg-gray-50 rounded-lg p-3">
+                          <div className="text-sm font-medium text-gray-900">{collection}</div>
+                          <div className="text-lg font-bold text-blue-600">{count}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         )}
 

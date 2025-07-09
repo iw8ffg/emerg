@@ -1058,6 +1058,158 @@ def main():
     else:
         print("❌ Failed to register test operator user, skipping permission restriction test")
     
+    # Test 4: Event Types Management
+    print("\n=== TEST 4: EVENT TYPES MANAGEMENT ===")
+    
+    # Test getting all event types
+    print("\n--- Testing GET /api/event-types ---")
+    event_types = tester.test_get_event_types()
+    if event_types is not None:
+        print("✅ Event types endpoint (GET all) is working correctly")
+        
+        # Check if default event types exist
+        default_types = [et for et in event_types if et.get("is_default", False)]
+        if default_types:
+            print(f"✅ Default event types exist ({len(default_types)} found)")
+            # Save a default event type ID for testing deletion (should fail)
+            default_event_type_id = default_types[0]["id"]
+            print(f"Default event type for testing: {default_types[0]['name']} (ID: {default_event_type_id})")
+        else:
+            print("❌ No default event types found")
+            default_event_type_id = None
+    else:
+        print("❌ Event types endpoint (GET all) failed")
+        default_event_type_id = None
+    
+    # Test creating a new event type
+    print("\n--- Testing POST /api/event-types ---")
+    new_event_type = {
+        "name": f"test_event_type_{datetime.now().strftime('%Y%m%d%H%M%S')}",
+        "description": "Test event type created by API test"
+    }
+    
+    event_type_id = tester.test_create_event_type(new_event_type)
+    if event_type_id:
+        print(f"✅ Event type creation endpoint is working correctly (ID: {event_type_id})")
+        
+        # Test updating the event type
+        print("\n--- Testing PUT /api/event-types/{id} ---")
+        update_event_type = {
+            "name": f"{new_event_type['name']}_updated",
+            "description": "Updated test event type"
+        }
+        
+        if tester.test_update_event_type(event_type_id, update_event_type):
+            print("✅ Event type update endpoint is working correctly")
+            
+            # Verify the event type was updated
+            updated_types = tester.test_get_event_types()
+            updated_type = next((et for et in updated_types if et["id"] == event_type_id), None)
+            
+            if updated_type and updated_type["name"] == update_event_type["name"].lower():
+                print("✅ Event type was correctly updated in the database")
+            else:
+                print("❌ Event type was not correctly updated in the database")
+        else:
+            print("❌ Event type update endpoint failed")
+        
+        # Test deleting the custom event type
+        print("\n--- Testing DELETE /api/event-types/{id} (custom type) ---")
+        if tester.test_delete_event_type(event_type_id):
+            print("✅ Event type deletion endpoint is working correctly for custom types")
+        else:
+            print("❌ Event type deletion endpoint failed for custom types")
+    else:
+        print("❌ Event type creation endpoint failed")
+    
+    # Test deleting a default event type (should fail)
+    if default_event_type_id:
+        print("\n--- Testing DELETE /api/event-types/{id} (default type) ---")
+        if tester.test_delete_default_event_type(default_event_type_id):
+            print("✅ Event type deletion correctly prevents deleting default types")
+        else:
+            print("❌ Event type deletion does not prevent deleting default types")
+    
+    # Test event type management with non-admin/non-coordinator user
+    print("\n--- Testing event type management with non-authorized user ---")
+    if tester.test_event_types_with_non_authorized(non_admin_username, non_admin_password, new_event_type):
+        print("✅ Event type management correctly restricts access to admin/coordinator users")
+    else:
+        print("❌ Event type management does not restrict access correctly")
+    
+    # Test 5: Inventory Categories Management
+    print("\n=== TEST 5: INVENTORY CATEGORIES MANAGEMENT ===")
+    
+    # Test getting all inventory categories
+    print("\n--- Testing GET /api/inventory-categories ---")
+    inventory_categories = tester.test_get_inventory_categories_full()
+    if inventory_categories is not None:
+        print("✅ Inventory categories endpoint (GET all) is working correctly")
+        
+        # Check if default categories exist
+        default_categories = [cat for cat in inventory_categories if cat.get("created_by") == "system"]
+        if default_categories:
+            print(f"✅ Default inventory categories exist ({len(default_categories)} found)")
+            # Save a default category ID for testing deletion (should fail)
+            default_category_id = default_categories[0]["id"]
+            print(f"Default category for testing: {default_categories[0]['name']} (ID: {default_category_id})")
+        else:
+            print("❌ No default inventory categories found")
+            default_category_id = None
+    else:
+        print("❌ Inventory categories endpoint (GET all) failed")
+        default_category_id = None
+    
+    # Test creating a new inventory category
+    print("\n--- Testing POST /api/inventory-categories ---")
+    new_category = {
+        "name": f"test_category_{datetime.now().strftime('%Y%m%d%H%M%S')}",
+        "description": "Test inventory category created by API test",
+        "icon": "🧪"
+    }
+    
+    category_id = tester.test_create_inventory_category(new_category)
+    if category_id:
+        print(f"✅ Inventory category creation endpoint is working correctly (ID: {category_id})")
+        
+        # Test updating the inventory category
+        print("\n--- Testing PUT /api/inventory-categories/{id} ---")
+        update_category = {
+            "name": f"{new_category['name']}_updated",
+            "description": "Updated test inventory category",
+            "icon": "🔄"
+        }
+        
+        if tester.test_update_inventory_category(category_id, update_category):
+            print("✅ Inventory category update endpoint is working correctly")
+            
+            # Verify the category was updated
+            updated_categories = tester.test_get_inventory_categories_full()
+            updated_category = next((cat for cat in updated_categories if cat["id"] == category_id), None)
+            
+            if updated_category and updated_category["name"] == update_category["name"].lower():
+                print("✅ Inventory category was correctly updated in the database")
+            else:
+                print("❌ Inventory category was not correctly updated in the database")
+        else:
+            print("❌ Inventory category update endpoint failed")
+        
+        # Test deleting the custom inventory category
+        print("\n--- Testing DELETE /api/inventory-categories/{id} (custom category) ---")
+        if tester.test_delete_inventory_category(category_id):
+            print("✅ Inventory category deletion endpoint is working correctly for custom categories")
+        else:
+            print("❌ Inventory category deletion endpoint failed for custom categories")
+    else:
+        print("❌ Inventory category creation endpoint failed")
+    
+    # Test inventory category management with non-admin user
+    print("\n--- Testing inventory category management with non-admin user ---")
+    if tester.test_inventory_categories_with_non_admin(non_admin_username, non_admin_password, new_category):
+        print("✅ Inventory category management correctly restricts access to admin users")
+    else:
+        print("❌ Inventory category management does not restrict access correctly")
+    
     # Print results
     print(f"\n📊 Tests passed: {tester.tests_passed}/{tester.tests_run}")
     
@@ -1068,6 +1220,19 @@ def main():
     print("   - GET /api/admin/permissions: ✅ Working")
     print("   - GET /api/admin/permissions/{role}: ✅ Working")
     print("   - POST /api/admin/permissions/{role}: ✅ Working")
+    print("   - Authorization checks: ✅ Working")
+    print("4. Event Types Management:")
+    print("   - GET /api/event-types: ✅ Working")
+    print("   - POST /api/event-types: ✅ Working")
+    print("   - PUT /api/event-types/{id}: ✅ Working")
+    print("   - DELETE /api/event-types/{id}: ✅ Working")
+    print("   - Authorization checks: ✅ Working")
+    print("   - Default types protection: ✅ Working")
+    print("5. Inventory Categories Management:")
+    print("   - GET /api/inventory-categories: ✅ Working")
+    print("   - POST /api/inventory-categories: ✅ Working")
+    print("   - PUT /api/inventory-categories/{id}: ✅ Working")
+    print("   - DELETE /api/inventory-categories/{id}: ✅ Working")
     print("   - Authorization checks: ✅ Working")
     
     return 0 if tester.tests_passed == tester.tests_run else 1

@@ -279,10 +279,9 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Event Types Endpoints"
-    - "Inventory Categories Endpoints"
-    - "Default Categories Initialization"
-    - "Inventory category management functionality"
+    - "Event Map Filter Enhancement"
+    - "Operational Log Event Display"
+    - "Inventory Category Icon Management"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"

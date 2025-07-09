@@ -13,7 +13,8 @@ const InventoryManagement = ({
   setSuccess,
   loading,
   setLoading,
-  API_BASE_URL 
+  API_BASE_URL,
+  inventoryCategories = [] // Add categories prop
 }) => {
   const [editingItem, setEditingItem] = useState(null);
   const [currentView, setCurrentView] = useState('list'); // list, create, edit

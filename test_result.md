@@ -300,6 +300,9 @@ frontend:
       - working: true
         agent: "testing"
         comment: "Verified through code review that the database management functionality is properly implemented. The dashboard includes a 'Gestione Database' section that displays the current MongoDB URL, database name, connection status, MongoDB version, number of collections, and total documents count. The section also includes a 'Configura Database' button that opens a modal for configuring the database. The modal includes fields for MongoDB URL, database name, and timeout settings, as well as buttons for testing the connection and applying the configuration. The functionality is restricted to admin users only, as evidenced by the conditional loading of database configuration and status in the useEffect hook. The implementation meets all the requirements specified in the review request."
+      - working: true
+        agent: "testing"
+        comment: "Thoroughly tested the fixed database management functionality. The implementation now correctly handles database switching: 1) The database configuration modal displays the current settings and includes a clear warning about re-authentication requirements, 2) The connection testing feature works properly, 3) When changing databases, the system shows a confirmation dialog, 4) After confirming, the database is updated successfully, 5) The user is automatically logged out and redirected to the login page with a success message, 6) The login page shows information about the database change and the need to re-authenticate. All the fixes mentioned in the review request are working correctly: proper handling of database switching, automatic logout, user notification about re-authentication, and warning in the modal."
 
 metadata:
   created_by: "main_agent"

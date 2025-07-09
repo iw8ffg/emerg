@@ -1497,7 +1497,14 @@ async def create_event_type(event_type: EventTypeCreate, current_user: dict = De
     }
     db.logs.insert_one(log_data)
     
-    return {"message": "Tipo di evento creato con successo", "event_type": event_type_data}
+    # Return the created event type without datetime objects
+    return {"message": "Tipo di evento creato con successo", "event_type": {
+        "id": event_type_data["id"],
+        "name": event_type_data["name"],
+        "description": event_type_data["description"],
+        "is_default": event_type_data["is_default"],
+        "created_by": event_type_data["created_by"]
+    }}
 
 @app.put("/api/event-types/{event_type_id}")
 async def update_event_type(event_type_id: str, event_type: EventTypeCreate, current_user: dict = Depends(get_current_user)):

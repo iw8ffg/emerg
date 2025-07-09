@@ -1653,6 +1653,10 @@ def main():
     else:
         print("❌ Inventory category management does not restrict access correctly")
     
+    # Test 6: Database Management Endpoints
+    print("\n=== TEST 6: DATABASE MANAGEMENT ENDPOINTS ===")
+    db_results = tester.test_database_management_endpoints()
+    
     # Print results
     print(f"\n📊 Tests passed: {tester.tests_passed}/{tester.tests_run}")
     
@@ -1677,6 +1681,12 @@ def main():
     print("   - PUT /api/inventory-categories/{id}: ✅ Working (Fixed ObjectId serialization)")
     print("   - DELETE /api/inventory-categories/{id}: ✅ Working")
     print("   - Authorization checks: ✅ Working")
+    print("6. Database Management:")
+    print(f"   - GET /api/admin/database/config: {'✅ Working' if db_results['db_config'] else '❌ Failed'}")
+    print(f"   - POST /api/admin/database/test: {'✅ Working' if db_results['db_test_valid'] and db_results['db_test_invalid'] else '❌ Failed'}")
+    print(f"   - GET /api/admin/database/status: {'✅ Working' if db_results['db_status'] else '❌ Failed'}")
+    print(f"   - POST /api/admin/database/update: {'✅ Working' if db_results['db_update'] else '❌ Failed'}")
+    print(f"   - Authorization checks: {'✅ Working' if db_results['auth_check'] else '❌ Failed'}")
     
     return 0 if tester.tests_passed == tester.tests_run else 1
 

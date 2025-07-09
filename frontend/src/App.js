@@ -1210,6 +1210,19 @@ function App() {
                           <p className="text-sm text-gray-600 mt-1">{event.notes}</p>
                         </div>
                       )}
+                      
+                      {/* Edit Button for authorized users */}
+                      {canAccess(['admin', 'coordinator', 'operator']) && (
+                        <div className="mt-4 flex justify-end">
+                          <button
+                            onClick={() => startEditingEvent(event)}
+                            className="flex items-center space-x-2 px-4 py-2 bg-yellow-600 text-white rounded-md text-sm hover:bg-yellow-700"
+                          >
+                            <EditIcon />
+                            <span>Modifica Evento</span>
+                          </button>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>

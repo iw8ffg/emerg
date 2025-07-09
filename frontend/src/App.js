@@ -137,7 +137,8 @@ function App() {
     longitude: '',
     address: '',
     resources_needed: [],
-    notes: ''
+    notes: '',
+    status: 'aperto'
   });
 
   // Operational Log form state

@@ -267,10 +267,14 @@ def main():
     # Create tester instance
     tester = DatabaseManagementTester()
     
-    # Login with admin credentials
+    # Try different admin credentials
     if not tester.test_login("admin", "admin123"):
-        print("❌ Login failed, cannot continue tests")
-        return 1
+        print("⚠️ Login with admin/admin123 failed, trying testadmin...")
+        if not tester.test_login("testadmin", "testadmin123"):
+            print("⚠️ Login with testadmin failed, trying coordinator...")
+            if not tester.test_login("coordinatore1", "coord123"):
+                print("❌ All login attempts failed, cannot continue tests")
+                return 1
     
     # Run database management tests
     tester.run_database_tests()

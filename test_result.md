@@ -116,6 +116,9 @@ backend:
       - working: true
         agent: "previous"
         comment: "PUT /api/events/{event_id} endpoint implemented with event update functionality"
+      - working: true
+        agent: "testing"
+        comment: "Tested PUT /api/events/{event_id} endpoint. Successfully updated event data, verified proper authorization checks, and confirmed handling of invalid event IDs."
         
   - task: "Permission management endpoints"
     implemented: true
@@ -128,6 +131,9 @@ backend:
       - working: true
         agent: "previous"
         comment: "GET/POST /api/admin/permissions endpoints implemented for dynamic role permission management"
+      - working: true
+        agent: "testing"
+        comment: "Tested all permission management endpoints: GET /api/admin/permissions, GET /api/admin/permissions/{role}, and POST /api/admin/permissions/{role}. All endpoints work correctly, including proper authorization checks that restrict access to admin users only."
 
 frontend:
   - task: "Events dropdown menu"

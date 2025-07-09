@@ -378,6 +378,158 @@ function App() {
     }
   };
 
+  const updateEvent = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+    
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/events/${editingEvent.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          title: eventForm.title,
+          description: eventForm.description,
+          event_type: eventForm.event_type,
+          severity: eventForm.severity,
+          latitude: eventForm.latitude ? parseFloat(eventForm.latitude) : null,
+          longitude: eventForm.longitude ? parseFloat(eventForm.longitude) : null,
+          address: eventForm.address || null,
+          notes: eventForm.notes || null,
+          resources_needed: eventForm.resources_needed || [],
+          status: eventForm.status || "aperto"
+        })
+      });
+      
+      if (response.ok) {
+        setSuccess('Evento aggiornato con successo!');
+        setEditingEvent(null);
+        setEventForm({
+          title: '',
+          description: '',
+          event_type: 'incendio',
+          severity: 'media',
+          latitude: '',
+          longitude: '',
+          address: '',
+          resources_needed: [],
+          notes: '',
+          status: 'aperto'
+        });
+        loadDashboardData();
+        setCurrentView('events');
+      } else {
+        const data = await response.json();
+        setError(data.detail || 'Errore durante l\'aggiornamento dell\'evento');
+      }
+    } catch (error) {
+      setError('Errore di connessione al server');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const startEditingEvent = (event) => {
+    setEditingEvent(event);
+    setEventForm({
+      title: event.title,
+      description: event.description,
+      event_type: event.event_type,
+      severity: event.severity,
+      latitude: event.latitude?.toString() || '',
+      longitude: event.longitude?.toString() || '',
+      address: event.address || '',
+      resources_needed: event.resources_needed || [],
+      notes: event.notes || '',
+      status: event.status || 'aperto'
+    });
+    setCurrentView('edit-event');
+  };
+
+  const cancelEditingEvent = () => {
+    setEditingEvent(null);
+    setEventForm({
+      title: '',
+      description: '',
+      event_type: 'incendio',
+      severity: 'media',
+      latitude: '',
+      longitude: '',
+      address: '',
+      resources_needed: [],
+      notes: '',
+      status: 'aperto'
+    });
+    setCurrentView('events');
+  };
+
+  const loadPermissions = async () => {
+    if (!token || user?.role !== 'admin') return;
+    
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/admin/permissions`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setAllPermissions(data.all_permissions);
+        setCurrentPermissions(data.current_permissions);
+        setRoles(data.roles);
+      }
+    } catch (error) {
+      console.error('Failed to load permissions:', error);
+    }
+  };
+
+  const loadRolePermissions = async (role) => {
+    if (!token || user?.role !== 'admin') return;
+    
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/admin/permissions/${role}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setRolePermissions(data.permissions || []);
+      }
+    } catch (error) {
+      console.error('Failed to load role permissions:', error);
+    }
+  };
+
+  const updateRolePermissions = async (role, permissions) => {
+    if (!token || user?.role !== 'admin') return;
+    
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/admin/permissions/${role}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          permissions: permissions,
+          description: `Permessi aggiornati per ${roles[role] || role}`
+        })
+      });
+      
+      if (response.ok) {
+        setSuccess(`Permessi aggiornati per il ruolo ${roles[role] || role}`);
+        loadPermissions(); // Reload permissions
+      } else {
+        const data = await response.json();
+        setError(data.detail || 'Errore durante l\'aggiornamento dei permessi');
+      }
+    } catch (error) {
+      setError('Errore di connessione al server');
+    }
+  };
+
   const createLog = async (e) => {
     e.preventDefault();
     setLoading(true);

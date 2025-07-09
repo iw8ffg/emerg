@@ -886,6 +886,72 @@ async def startup_event():
         else:
             print("✅ Sistema già configurato - Saltando inizializzazione dati esempio")
         
+        # Initialize default categories
+        print("\n🏷️ Inizializzazione categorie predefinite...")
+        
+        # Default event types
+        default_event_types = [
+            {"name": "incendio", "description": "Incendi di varia natura", "is_default": True},
+            {"name": "terremoto", "description": "Eventi sismici", "is_default": True},
+            {"name": "alluvione", "description": "Inondazioni e alluvioni", "is_default": True},
+            {"name": "valanga", "description": "Valanghe e slavine", "is_default": True},
+            {"name": "frana", "description": "Frane e smottamenti", "is_default": True},
+            {"name": "incidente_stradale", "description": "Incidenti stradali", "is_default": True},
+            {"name": "emergenza_sanitaria", "description": "Emergenze sanitarie", "is_default": True},
+            {"name": "emergenza_ambientale", "description": "Emergenze ambientali", "is_default": True},
+            {"name": "altro", "description": "Altri tipi di emergenza", "is_default": True}
+        ]
+        
+        for event_type in default_event_types:
+            existing = db.event_types.find_one({"name": event_type["name"]})
+            if not existing:
+                event_type_data = {
+                    "id": str(uuid.uuid4()),
+                    "name": event_type["name"],
+                    "description": event_type["description"],
+                    "is_default": event_type["is_default"],
+                    "created_at": datetime.now(),
+                    "created_by": "system"
+                }
+                db.event_types.insert_one(event_type_data)
+                print(f"   ✅ Tipo evento '{event_type['name']}' creato")
+        
+        # Default inventory categories
+        default_inventory_categories = [
+            {"name": "medicinali", "description": "Medicinali e dispositivi medici", "icon": "🏥"},
+            {"name": "attrezzature", "description": "Attrezzature e strumenti", "icon": "🔧"},
+            {"name": "vestiario", "description": "Vestiario e accessori", "icon": "👕"},
+            {"name": "comunicazione", "description": "Dispositivi di comunicazione", "icon": "📻"},
+            {"name": "alimentari", "description": "Generi alimentari e bevande", "icon": "🥫"},
+            {"name": "sicurezza", "description": "Dispositivi di sicurezza", "icon": "🦺"},
+            {"name": "trasporti", "description": "Mezzi di trasporto", "icon": "🚗"},
+            {"name": "energia", "description": "Generatori e alimentazione", "icon": "⚡"},
+            {"name": "utensili", "description": "Utensili e attrezzi", "icon": "🔨"},
+            {"name": "altro", "description": "Altre categorie", "icon": "📦"}
+        ]
+        
+        for category in default_inventory_categories:
+            existing = db.inventory_categories.find_one({"name": category["name"]})
+            if not existing:
+                category_data = {
+                    "id": str(uuid.uuid4()),
+                    "name": category["name"],
+                    "description": category["description"],
+                    "icon": category["icon"],
+                    "created_at": datetime.now(),
+                    "created_by": "system"
+                }
+                db.inventory_categories.insert_one(category_data)
+                print(f"   ✅ Categoria inventario '{category['name']}' creata")
+        
+        # Create indexes for new collections
+        try:
+            db.event_types.create_index([("name", 1)], unique=True)
+            db.inventory_categories.create_index([("name", 1)], unique=True)
+            print("✅ Indici collezioni categorie creati")
+        except Exception as e:
+            print(f"⚠️ Avviso indici categorie: {str(e)}")
+        
         # Final system status
         print(f"\n📊 STATO SISTEMA:")
         print(f"   👥 Utenti registrati: {db.users.count_documents({})}")
@@ -893,6 +959,8 @@ async def startup_event():
         print(f"   📦 Articoli inventario: {db.inventory.count_documents({})}")
         print(f"   👷 Risorse formate: {db.resources.count_documents({})}")
         print(f"   📝 Log operativi: {db.logs.count_documents({})}")
+        print(f"   🏷️ Tipi evento: {db.event_types.count_documents({})}")
+        print(f"   🗂️ Categorie inventario: {db.inventory_categories.count_documents({})}")
         
         print("\n✅ === SISTEMA GESTIONE EMERGENZE PRONTO ===")
         print("🌐 Accedi all'interfaccia web per iniziare!")

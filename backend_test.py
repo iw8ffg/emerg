@@ -622,6 +622,176 @@ class EmergencySystemAPITester:
             print(f"Admin stats: {json.dumps(response, indent=2)}")
             return response
         return {}
+        
+    # Permission Management Tests
+    def test_get_all_permissions(self):
+        """Test getting all permissions and role assignments (admin only)"""
+        success, response = self.run_test(
+            "Get all permissions and role assignments",
+            "GET",
+            "admin/permissions",
+            200
+        )
+        if success:
+            print(f"Retrieved all permissions and role assignments")
+            print(f"Available roles: {list(response.get('roles', {}).keys())}")
+            print(f"Total permissions: {len(response.get('all_permissions', []))}")
+            return response
+        return {}
+    
+    def test_get_role_permissions(self, role):
+        """Test getting permissions for a specific role (admin only)"""
+        success, response = self.run_test(
+            f"Get permissions for role '{role}'",
+            "GET",
+            f"admin/permissions/{role}",
+            200
+        )
+        if success:
+            print(f"Retrieved permissions for role '{role}'")
+            print(f"Permissions: {response.get('permissions', [])}")
+            return response
+        return {}
+    
+    def test_update_role_permissions(self, role, permissions, description=None):
+        """Test updating permissions for a specific role (admin only)"""
+        data = {
+            "role": role,
+            "permissions": permissions
+        }
+        if description:
+            data["description"] = description
+            
+        success, response = self.run_test(
+            f"Update permissions for role '{role}'",
+            "POST",
+            f"admin/permissions/{role}",
+            200,
+            data=data
+        )
+        if success:
+            print(f"Updated permissions for role '{role}'")
+            print(f"Response: {json.dumps(response, indent=2)}")
+            return True
+        return False
+    
+    def test_permissions_with_non_admin(self, username, password):
+        """Test permission endpoints with non-admin user (should fail)"""
+        # Save current token
+        original_token = self.token
+        
+        # Login with non-admin user
+        print(f"\n🔍 Testing permissions endpoints with non-admin user '{username}'...")
+        success, response = self.run_test(
+            f"Login with non-admin user '{username}'",
+            "POST",
+            "auth/login",
+            200,
+            data={"username": username, "password": password}
+        )
+        
+        if not success:
+            print(f"❌ Failed to login with user '{username}'")
+            self.token = original_token
+            return False
+            
+        non_admin_token = response['access_token']
+        self.token = non_admin_token
+        
+        # Try to access permissions endpoints
+        get_all_success, _ = self.run_test(
+            "Get all permissions with non-admin user (should fail)",
+            "GET",
+            "admin/permissions",
+            403  # Expecting forbidden
+        )
+        
+        get_role_success, _ = self.run_test(
+            "Get role permissions with non-admin user (should fail)",
+            "GET",
+            "admin/permissions/operator",
+            403  # Expecting forbidden
+        )
+        
+        update_success, _ = self.run_test(
+            "Update role permissions with non-admin user (should fail)",
+            "POST",
+            "admin/permissions/operator",
+            403,  # Expecting forbidden
+            data={"role": "operator", "permissions": ["events.read"]}
+        )
+        
+        # Restore original token
+        self.token = original_token
+        
+        # All tests should fail with 403 for non-admin users
+        return get_all_success and get_role_success and update_success
+    
+    # Event Management Tests
+    def test_update_event(self, event_id, event_data):
+        """Test updating an emergency event"""
+        success, response = self.run_test(
+            f"Update emergency event {event_id}",
+            "PUT",
+            f"events/{event_id}",
+            200,
+            data=event_data
+        )
+        if success:
+            print(f"Event updated: {json.dumps(response, indent=2)}")
+            return True
+        return False
+    
+    def test_update_event_invalid_id(self, event_data):
+        """Test updating an emergency event with invalid ID"""
+        invalid_id = "invalid-event-id-12345"
+        success, response = self.run_test(
+            f"Update emergency event with invalid ID",
+            "PUT",
+            f"events/{invalid_id}",
+            404,  # Expecting not found
+            data=event_data
+        )
+        # This test passes if we get a 404 error
+        return success
+    
+    def test_update_event_with_non_authorized_user(self, username, password, event_id, event_data):
+        """Test updating an event with a user that doesn't have permission"""
+        # Save current token
+        original_token = self.token
+        
+        # Login with non-authorized user
+        print(f"\n🔍 Testing event update with non-authorized user '{username}'...")
+        success, response = self.run_test(
+            f"Login with user '{username}'",
+            "POST",
+            "auth/login",
+            200,
+            data={"username": username, "password": password}
+        )
+        
+        if not success:
+            print(f"❌ Failed to login with user '{username}'")
+            self.token = original_token
+            return False
+            
+        non_auth_token = response['access_token']
+        self.token = non_auth_token
+        
+        # Try to update event
+        update_success, _ = self.run_test(
+            "Update event with non-authorized user (should fail)",
+            "PUT",
+            f"events/{event_id}",
+            403,  # Expecting forbidden
+            data=event_data
+        )
+        
+        # Restore original token
+        self.token = original_token
+        
+        # Test passes if update fails with 403
+        return update_success
 
 def main():
     # Setup

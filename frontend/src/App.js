@@ -926,10 +926,12 @@ function App() {
             setSuccess(`Nuovo database creato e inizializzato. Credenziali admin di default create.`);
           }
           setShowDatabaseConfig(false);
-          loadDatabaseConfig();
-          loadDatabaseStatus();
-          // Ricarica i dati del dashboard dal nuovo database
-          loadDashboardData();
+          
+          // Dopo il cambio database, il token diventa invalido
+          // Dobbiamo fare logout e chiedere all'utente di riautenticarsi
+          alert('Database cambiato con successo. È necessario riautenticarsi per accedere al nuovo database.');
+          logout();
+          
         } else {
           setError(`Errore aggiornamento database: ${data.message}`);
         }

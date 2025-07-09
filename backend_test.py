@@ -748,12 +748,20 @@ def main():
     
     # Print summary of database initialization
     print("\n=== DATABASE INITIALIZATION SUMMARY ===")
-    stats = tester.test_get_dashboard_stats()
+    success, stats = tester.run_test(
+        "Get dashboard statistics",
+        "GET",
+        "dashboard/stats",
+        200
+    )
     
     print(f"✅ Users: {len(users)}")
-    print(f"✅ Inventory Items: {stats.get('inventory_items', 0)}")
-    print(f"✅ Trained Resources: {stats.get('trained_resources', 0)}")
-    print(f"✅ Operational Logs: {stats.get('total_logs', 0)}")
+    if success:
+        print(f"✅ Inventory Items: {stats.get('inventory_items', 0)}")
+        print(f"✅ Trained Resources: {stats.get('trained_resources', 0)}")
+        print(f"✅ Operational Logs: {stats.get('total_logs', 0)}")
+    else:
+        print("❌ Could not retrieve dashboard statistics")
     
     # Print results
     print(f"\n📊 Tests passed: {tester.tests_passed}/{tester.tests_run}")

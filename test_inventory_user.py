@@ -4,7 +4,7 @@ import json
 from datetime import datetime, timedelta
 
 class InventoryUserTester:
-    def __init__(self, base_url="https://5f984545-e129-4cc2-a34a-9e9847a0f0a0.preview.emergentagent.com"):
+    def __init__(self, base_url="https://272455ba-030f-4132-83b6-fa2f9889fad1.preview.emergentagent.com"):
         self.base_url = base_url
         self.token = None
         self.tests_run = 0

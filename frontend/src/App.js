@@ -134,6 +134,18 @@ function App() {
   const [eventTypeForm, setEventTypeForm] = useState({ name: '', description: '' });
   const [inventoryCategoryForm, setInventoryCategoryForm] = useState({ name: '', description: '', icon: '' });
 
+  // Database management state
+  const [databaseConfig, setDatabaseConfig] = useState({
+    mongo_url: '',
+    database_name: 'emergency_management',
+    connection_timeout: 5000,
+    server_selection_timeout: 5000
+  });
+  const [databaseStatus, setDatabaseStatus] = useState({});
+  const [showDatabaseConfig, setShowDatabaseConfig] = useState(false);
+  const [testingConnection, setTestingConnection] = useState(false);
+  const [updatingDatabase, setUpdatingDatabase] = useState(false);
+
   // Login form state
   const [loginForm, setLoginForm] = useState({ username: '', password: '' });
 

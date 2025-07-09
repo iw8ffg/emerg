@@ -210,6 +210,24 @@ function App() {
     }
   }, [token]);
 
+  useEffect(() => {
+    if (user?.role === 'admin') {
+      loadPermissions();
+    }
+  }, [user]);
+
+  // Close dropdowns when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (showEventsMenu && !event.target.closest('.events-dropdown')) {
+        setShowEventsMenu(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showEventsMenu]);
+
   const checkAuth = async () => {
     try {
       const response = await fetch(`${API_BASE_URL}/api/auth/me`, {

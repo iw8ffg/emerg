@@ -1065,10 +1065,35 @@ def main():
     
     # Test permission endpoints with non-admin user
     print("\n--- Testing permission endpoints with non-admin user ---")
-    if tester.test_permissions_with_non_admin("operatore1", "oper123"):
-        print("✅ Permission management correctly restricts access to admin users only")
+    
+    # Create a non-admin user for testing
+    non_admin_username = "testoperator"
+    non_admin_password = "testoperator123"
+    
+    register_data = {
+        "username": non_admin_username,
+        "email": "testoperator@example.com",
+        "password": non_admin_password,
+        "role": "operator",
+        "full_name": "Test Operator"
+    }
+    
+    success, _ = tester.run_test(
+        "Register test operator user",
+        "POST",
+        "auth/register",
+        200,
+        data=register_data
+    )
+    
+    if success:
+        print(f"✅ Successfully registered test operator user '{non_admin_username}'")
+        if tester.test_permissions_with_non_admin(non_admin_username, non_admin_password):
+            print("✅ Permission management correctly restricts access to admin users only")
+        else:
+            print("❌ Permission management does not restrict access to admin users correctly")
     else:
-        print("❌ Permission management does not restrict access to admin users correctly")
+        print("❌ Failed to register test operator user, skipping permission restriction test")
     
     # Print results
     print(f"\n📊 Tests passed: {tester.tests_passed}/{tester.tests_run}")

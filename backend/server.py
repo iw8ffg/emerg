@@ -1015,19 +1015,179 @@ async def get_emergency_event(event_id: str, current_user: dict = Depends(get_cu
     return event
 
 @app.put("/api/events/{event_id}")
-async def update_emergency_event(event_id: str, event: EmergencyEvent, current_user: dict = Depends(get_current_user)):
+async def update_emergency_event(event_id: str, event_update: EventUpdate, current_user: dict = Depends(get_current_user)):
     # Check permissions
-    if current_user["role"] not in ["admin", "coordinator", "operator"]:
+    if not check_permission(current_user["role"], "events.update"):
         raise HTTPException(status_code=403, detail="Permessi insufficienti")
     
-    event_data = event.dict()
-    event_data["updated_at"] = datetime.now()
+    # Get existing event
+    existing_event = db.events.find_one({"id": event_id})
+    if not existing_event:
+        raise HTTPException(status_code=404, detail="Evento non trovato")
     
-    result = db.events.update_one({"id": event_id}, {"$set": event_data})
+    # Prepare update data
+    update_data = {}
+    if event_update.title is not None:
+        update_data["title"] = event_update.title
+    if event_update.description is not None:
+        update_data["description"] = event_update.description
+    if event_update.event_type is not None:
+        update_data["event_type"] = event_update.event_type
+    if event_update.severity is not None:
+        update_data["severity"] = event_update.severity
+    if event_update.latitude is not None:
+        update_data["latitude"] = event_update.latitude
+    if event_update.longitude is not None:
+        update_data["longitude"] = event_update.longitude
+    if event_update.address is not None:
+        update_data["address"] = event_update.address
+    if event_update.status is not None:
+        update_data["status"] = event_update.status
+    if event_update.resources_needed is not None:
+        update_data["resources_needed"] = event_update.resources_needed
+    if event_update.notes is not None:
+        update_data["notes"] = event_update.notes
+    
+    # Add metadata
+    update_data["updated_at"] = datetime.now()
+    update_data["updated_by"] = current_user["username"]
+    
+    # Update event
+    result = db.events.update_one({"id": event_id}, {"$set": update_data})
     if result.matched_count == 0:
         raise HTTPException(status_code=404, detail="Evento non trovato")
     
+    # Create log entry
+    log_data = {
+        "id": str(uuid.uuid4()),
+        "timestamp": datetime.now(),
+        "operator": current_user["username"],
+        "action": f"Aggiornamento evento: {existing_event['title']}",
+        "details": f"Evento aggiornato con nuovi dati. ID: {event_id}",
+        "event_id": event_id,
+        "priority": "normale"
+    }
+    db.logs.insert_one(log_data)
+    
     return {"message": "Evento aggiornato con successo"}
+
+@app.delete("/api/events/{event_id}")
+async def delete_emergency_event(event_id: str, current_user: dict = Depends(get_current_user)):
+    # Check permissions
+    if not check_permission(current_user["role"], "events.delete"):
+        raise HTTPException(status_code=403, detail="Permessi insufficienti")
+    
+    # Get event details for logging
+    event = db.events.find_one({"id": event_id})
+    if not event:
+        raise HTTPException(status_code=404, detail="Evento non trovato")
+    
+    # Delete event
+    result = db.events.delete_one({"id": event_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Evento non trovato")
+    
+    # Create log entry
+    log_data = {
+        "id": str(uuid.uuid4()),
+        "timestamp": datetime.now(),
+        "operator": current_user["username"],
+        "action": f"Eliminazione evento: {event['title']}",
+        "details": f"Evento eliminato dal sistema. ID: {event_id}",
+        "priority": "alta"
+    }
+    db.logs.insert_one(log_data)
+    
+    return {"message": "Evento eliminato con successo"}
+
+# Role Permissions Management (Admin only)
+@app.get("/api/admin/permissions")
+async def get_all_permissions(current_user: dict = Depends(get_current_user)):
+    """Get all available permissions and current role assignments"""
+    if not check_permission(current_user["role"], "permissions.manage"):
+        raise HTTPException(status_code=403, detail="Solo gli amministratori possono gestire i permessi")
+    
+    # Get all available permissions
+    all_permissions = [
+        "events.create", "events.read", "events.update", "events.delete",
+        "inventory.create", "inventory.read", "inventory.update", "inventory.delete",
+        "logs.create", "logs.read", "logs.update", "logs.delete",
+        "users.create", "users.read", "users.update", "users.delete",
+        "resources.create", "resources.read", "resources.update", "resources.delete",
+        "reports.generate", "dashboard.read", "permissions.manage"
+    ]
+    
+    # Get current role permissions
+    current_permissions = {}
+    for role in USER_ROLES.keys():
+        role_perms = db.role_permissions.find_one({"role": role})
+        if role_perms:
+            current_permissions[role] = role_perms["permissions"]
+        else:
+            current_permissions[role] = DEFAULT_PERMISSIONS.get(role, [])
+    
+    return {
+        "all_permissions": all_permissions,
+        "current_permissions": current_permissions,
+        "roles": USER_ROLES
+    }
+
+@app.post("/api/admin/permissions/{role}")
+async def update_role_permissions(role: str, permissions: RolePermissions, current_user: dict = Depends(get_current_user)):
+    """Update permissions for a specific role"""
+    if not check_permission(current_user["role"], "permissions.manage"):
+        raise HTTPException(status_code=403, detail="Solo gli amministratori possono gestire i permessi")
+    
+    if role not in USER_ROLES:
+        raise HTTPException(status_code=400, detail="Ruolo non valido")
+    
+    # Update or create role permissions
+    permission_data = {
+        "role": role,
+        "permissions": permissions.permissions,
+        "description": permissions.description,
+        "updated_at": datetime.now(),
+        "updated_by": current_user["username"]
+    }
+    
+    result = db.role_permissions.update_one(
+        {"role": role}, 
+        {"$set": permission_data}, 
+        upsert=True
+    )
+    
+    # Create log entry
+    log_data = {
+        "id": str(uuid.uuid4()),
+        "timestamp": datetime.now(),
+        "operator": current_user["username"],
+        "action": f"Aggiornamento permessi ruolo: {role}",
+        "details": f"Permessi modificati per il ruolo {role}. Nuovi permessi: {', '.join(permissions.permissions)}",
+        "priority": "alta"
+    }
+    db.logs.insert_one(log_data)
+    
+    return {"message": f"Permessi per il ruolo {role} aggiornati con successo"}
+
+@app.get("/api/admin/permissions/{role}")
+async def get_role_permissions(role: str, current_user: dict = Depends(get_current_user)):
+    """Get permissions for a specific role"""
+    if not check_permission(current_user["role"], "permissions.manage"):
+        raise HTTPException(status_code=403, detail="Solo gli amministratori possono gestire i permessi")
+    
+    if role not in USER_ROLES:
+        raise HTTPException(status_code=400, detail="Ruolo non valido")
+    
+    role_perms = db.role_permissions.find_one({"role": role}, {"_id": 0})
+    if not role_perms:
+        # Return default permissions if none found
+        role_perms = {
+            "role": role,
+            "permissions": DEFAULT_PERMISSIONS.get(role, []),
+            "description": f"Permessi di default per {USER_ROLES[role]}"
+        }
+    
+    return role_perms
 
 # Inventory endpoints
 @app.post("/api/inventory")

@@ -1241,7 +1241,174 @@ function App() {
           />
         )}
 
-        {/* Create Event View */}
+        {/* Edit Event View */}
+        {currentView === 'edit-event' && editingEvent && canAccess(['admin', 'coordinator', 'operator']) && (
+          <div className="bg-white rounded-lg shadow">
+            <div className="px-6 py-4 border-b border-gray-200">
+              <h3 className="text-lg font-medium text-gray-900">Modifica Evento di Emergenza</h3>
+            </div>
+            <div className="px-6 py-4">
+              <form onSubmit={updateEvent} className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Titolo Evento *
+                    </label>
+                    <input
+                      type="text"
+                      value={eventForm.title}
+                      onChange={(e) => setEventForm({ ...eventForm, title: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      required
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Tipo di Evento *
+                    </label>
+                    <select
+                      value={eventForm.event_type}
+                      onChange={(e) => setEventForm({ ...eventForm, event_type: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="incendio">Incendio</option>
+                      <option value="terremoto">Terremoto</option>
+                      <option value="alluvione">Alluvione</option>
+                      <option value="valanga">Valanga</option>
+                      <option value="frana">Frana</option>
+                      <option value="incidente_stradale">Incidente Stradale</option>
+                      <option value="emergenza_sanitaria">Emergenza Sanitaria</option>
+                      <option value="emergenza_ambientale">Emergenza Ambientale</option>
+                      <option value="altro">Altro</option>
+                    </select>
+                  </div>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Descrizione *
+                  </label>
+                  <textarea
+                    value={eventForm.description}
+                    onChange={(e) => setEventForm({ ...eventForm, description: e.target.value })}
+                    rows={3}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    required
+                  />
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Gravità *
+                    </label>
+                    <select
+                      value={eventForm.severity}
+                      onChange={(e) => setEventForm({ ...eventForm, severity: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="bassa">Bassa</option>
+                      <option value="media">Media</option>
+                      <option value="alta">Alta</option>
+                      <option value="critica">Critica</option>
+                    </select>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Status *
+                    </label>
+                    <select
+                      value={eventForm.status}
+                      onChange={(e) => setEventForm({ ...eventForm, status: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="aperto">Aperto</option>
+                      <option value="in_corso">In Corso</option>
+                      <option value="risolto">Risolto</option>
+                      <option value="chiuso">Chiuso</option>
+                    </select>
+                  </div>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Indirizzo
+                  </label>
+                  <input
+                    type="text"
+                    value={eventForm.address}
+                    onChange={(e) => setEventForm({ ...eventForm, address: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Indirizzo o località dell'evento"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Coordinate GPS
+                  </label>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <input
+                        type="number"
+                        step="any"
+                        value={eventForm.latitude}
+                        onChange={(e) => setEventForm({ ...eventForm, latitude: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="Latitudine (es: 45.4642)"
+                      />
+                    </div>
+                    <div>
+                      <input
+                        type="number"
+                        step="any"
+                        value={eventForm.longitude}
+                        onChange={(e) => setEventForm({ ...eventForm, longitude: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="Longitudine (es: 9.1900)"
+                      />
+                    </div>
+                  </div>
+                  <p className="text-sm text-gray-500 mt-1">
+                    Inserisci le coordinate GPS per geolocalizzare l'evento. Puoi ottenerle da Google Maps o altri servizi di mappe.
+                  </p>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Note aggiuntive
+                  </label>
+                  <textarea
+                    value={eventForm.notes}
+                    onChange={(e) => setEventForm({ ...eventForm, notes: e.target.value })}
+                    rows={3}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Informazioni aggiuntive, risorse richieste, etc."
+                  />
+                </div>
+                
+                <div className="flex justify-end space-x-3">
+                  <button
+                    type="button"
+                    onClick={cancelEditingEvent}
+                    className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+                  >
+                    Annulla
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-yellow-600 hover:bg-yellow-700 disabled:bg-gray-400"
+                  >
+                    {loading ? 'Aggiornamento...' : 'Aggiorna Evento'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
         {currentView === 'create-event' && canAccess(['admin', 'coordinator', 'operator']) && (
           <div className="bg-white rounded-lg shadow">
             <div className="px-6 py-4 border-b border-gray-200">

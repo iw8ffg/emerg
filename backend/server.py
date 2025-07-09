@@ -289,6 +289,164 @@ def create_access_token(data: dict):
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
+# Database management functions
+def test_database_connection(mongo_url: str, database_name: str, timeout: int = 5000):
+    """Test connection to a MongoDB database"""
+    try:
+        test_client = MongoClient(
+            mongo_url, 
+            serverSelectionTimeoutMS=timeout,
+            connectTimeoutMS=timeout
+        )
+        # Try to get server info to test connection
+        test_client.admin.command('ismaster')
+        test_db = test_client[database_name]
+        # Try a simple operation to test database access
+        test_db.list_collection_names()
+        test_client.close()
+        return True, "Connessione riuscita"
+    except ServerSelectionTimeoutError:
+        return False, "Timeout nella connessione al server MongoDB"
+    except ConnectionFailure:
+        return False, "Impossibile connettersi al server MongoDB"
+    except ConfigurationError as e:
+        return False, f"Errore di configurazione: {str(e)}"
+    except Exception as e:
+        return False, f"Errore generico: {str(e)}"
+
+def switch_database_connection(mongo_url: str, database_name: str):
+    """Switch to a new database connection"""
+    global current_client, current_db, current_mongo_url, current_database_name
+    
+    try:
+        # Close existing connection
+        if current_client:
+            current_client.close()
+        
+        # Create new connection
+        new_client = MongoClient(mongo_url)
+        new_db = new_client[database_name]
+        
+        # Test the new connection
+        new_db.list_collection_names()
+        
+        # Update global variables
+        current_client = new_client
+        current_db = new_db
+        current_mongo_url = mongo_url
+        current_database_name = database_name
+        
+        # Update the global db variable that's used throughout the app
+        global db
+        db = new_db
+        
+        return True, "Connessione database aggiornata con successo"
+    except Exception as e:
+        return False, f"Errore durante il cambio di database: {str(e)}"
+
+def initialize_new_database(database):
+    """Initialize a new database with default admin user and collections"""
+    try:
+        # Create default admin user
+        admin_user = {
+            "id": str(uuid.uuid4()),
+            "username": "admin",
+            "password": hash_password("admin123"),
+            "email": "admin@emergency.local",
+            "full_name": "Amministratore Sistema",
+            "role": "admin",
+            "department": "Amministrazione",
+            "is_active": True,
+            "created_at": datetime.now(),
+            "last_login": None
+        }
+        
+        # Check if admin user already exists
+        existing_admin = database.users.find_one({"username": "admin"})
+        if not existing_admin:
+            database.users.insert_one(admin_user)
+            print("✅ Utente admin creato nel nuovo database")
+        
+        # Initialize default role permissions
+        default_permissions = {
+            "admin": {
+                "permissions": [
+                    "events.create", "events.read", "events.update", "events.delete",
+                    "logs.create", "logs.read", "logs.update", "logs.delete",
+                    "inventory.create", "inventory.read", "inventory.update", "inventory.delete",
+                    "users.create", "users.read", "users.update", "users.delete",
+                    "reports.generate", "reports.export",
+                    "admin.permissions", "admin.database"
+                ],
+                "description": "Accesso completo al sistema",
+                "created_at": datetime.now(),
+                "last_updated_at": datetime.now(),
+                "last_updated_by": "system"
+            }
+        }
+        
+        for role, perm_data in default_permissions.items():
+            existing = database.role_permissions.find_one({"role": role})
+            if not existing:
+                database.role_permissions.insert_one({"role": role, **perm_data})
+        
+        # Initialize default event types
+        default_event_types = [
+            {"name": "incendio", "description": "Incendi di varia natura", "is_default": True},
+            {"name": "terremoto", "description": "Eventi sismici", "is_default": True},
+            {"name": "alluvione", "description": "Inondazioni e alluvioni", "is_default": True},
+            {"name": "altro", "description": "Altri tipi di emergenza", "is_default": True}
+        ]
+        
+        for event_type in default_event_types:
+            existing = database.event_types.find_one({"name": event_type["name"]})
+            if not existing:
+                event_type_data = {
+                    "id": str(uuid.uuid4()),
+                    "name": event_type["name"],
+                    "description": event_type["description"],
+                    "is_default": event_type["is_default"],
+                    "created_at": datetime.now(),
+                    "created_by": "system"
+                }
+                database.event_types.insert_one(event_type_data)
+        
+        # Initialize default inventory categories
+        default_categories = [
+            {"name": "medicinali", "description": "Medicinali e dispositivi medici", "icon": "🏥"},
+            {"name": "attrezzature", "description": "Attrezzature e strumenti", "icon": "🔧"},
+            {"name": "altro", "description": "Altre categorie", "icon": "📦"}
+        ]
+        
+        for category in default_categories:
+            existing = database.inventory_categories.find_one({"name": category["name"]})
+            if not existing:
+                category_data = {
+                    "id": str(uuid.uuid4()),
+                    "name": category["name"],
+                    "description": category["description"],
+                    "icon": category["icon"],
+                    "created_at": datetime.now(),
+                    "created_by": "system"
+                }
+                database.inventory_categories.insert_one(category_data)
+        
+        # Create indexes
+        try:
+            database.users.create_index([("username", 1)], unique=True)
+            database.events.create_index([("id", 1)], unique=True)
+            database.logs.create_index([("id", 1)], unique=True)
+            database.inventory.create_index([("id", 1)], unique=True)
+            database.event_types.create_index([("name", 1)], unique=True)
+            database.inventory_categories.create_index([("name", 1)], unique=True)
+            database.role_permissions.create_index([("role", 1)], unique=True)
+        except Exception as e:
+            print(f"⚠️ Avviso creazione indici: {str(e)}")
+        
+        return True, "Database inizializzato con successo"
+    except Exception as e:
+        return False, f"Errore durante l'inizializzazione del database: {str(e)}"
+
 def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
     try:
         payload = jwt.decode(credentials.credentials, SECRET_KEY, algorithms=[ALGORITHM])

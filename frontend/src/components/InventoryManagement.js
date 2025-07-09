@@ -659,6 +659,16 @@ const InventoryManagement = ({
               ))}
             </select>
             
+            {canManageCategories && (
+              <button
+                onClick={() => setShowAddCategory(true)}
+                className="px-3 py-2 bg-green-600 text-white rounded-md text-sm hover:bg-green-700 flex items-center space-x-1"
+              >
+                <PlusIcon className="h-4 w-4" />
+                <span>Gestisci Categorie</span>
+              </button>
+            )}
+            
             <input
               type="text"
               placeholder="Filtra per posizione"

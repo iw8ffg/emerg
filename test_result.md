@@ -137,6 +137,9 @@ backend:
       - working: true
         agent: "testing"
         comment: "Tested all inventory categories endpoints. GET /api/inventory-categories works correctly and returns default categories. Authorization checks work properly, restricting access to admin users only. POST and PUT endpoints are implemented but have a MongoDB ObjectId serialization issue that needs to be fixed."
+      - working: true
+        agent: "testing"
+        comment: "Retested the POST and PUT endpoints for inventory categories. The MongoDB ObjectId serialization issue has been fixed. Successfully created a new inventory category, updated it, and verified the changes. The endpoints now return properly serialized responses without datetime objects. Full CRUD functionality is working correctly with proper authorization checks."
         
   - task: "Default Categories Initialization"
     implemented: true

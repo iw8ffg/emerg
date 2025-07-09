@@ -2454,7 +2454,7 @@ function App() {
                           </span>
                           {log.event_id && (
                             <span className="text-blue-600">
-                              <strong>Evento collegato:</strong> {log.event_id}
+                              <strong>Evento collegato:</strong> {getEventTitle(log.event_id)}
                             </span>
                           )}
                         </div>

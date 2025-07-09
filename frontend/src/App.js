@@ -105,9 +105,12 @@ function App() {
   const [inventory, setInventory] = useState([]);
   const [logs, setLogs] = useState([]);
   const [resources, setResources] = useState([]);
-  const [dashboardStats, setDashboardStats] = useState({});
   const [users, setUsers] = useState([]);
+  const [dashboardStats, setDashboardStats] = useState({});
   const [inventoryAlerts, setInventoryAlerts] = useState({});
+  const [permissions, setPermissions] = useState({});
+  const [editingEvent, setEditingEvent] = useState(null);
+  const [showEventsMenu, setShowEventsMenu] = useState(false);
 
   // Login form state
   const [loginForm, setLoginForm] = useState({ username: '', password: '' });

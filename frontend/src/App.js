@@ -227,6 +227,13 @@ function App() {
     }
   }, [user]);
 
+  useEffect(() => {
+    if (token) {
+      loadEventTypes();
+      loadInventoryCategories();
+    }
+  }, [token]);
+
   // Close dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {

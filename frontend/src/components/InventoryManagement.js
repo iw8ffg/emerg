@@ -289,19 +289,31 @@ const InventoryManagement = ({
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Categoria *
                 </label>
-                <select
-                  value={inventoryForm.category}
-                  onChange={(e) => setInventoryForm({ ...inventoryForm, category: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  required
-                >
-                  <option value="">Seleziona categoria</option>
-                  {inventoryCategories.map((category) => (
-                    <option key={category.id} value={category.name}>
-                      {category.icon} {category.name.charAt(0).toUpperCase() + category.name.slice(1)}
-                    </option>
-                  ))}
-                </select>
+                <div className="flex space-x-2">
+                  <select
+                    value={inventoryForm.category}
+                    onChange={(e) => setInventoryForm({ ...inventoryForm, category: e.target.value })}
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    required
+                  >
+                    <option value="">Seleziona categoria</option>
+                    {inventoryCategories.map((category) => (
+                      <option key={category.id} value={category.name}>
+                        {category.icon} {category.name.charAt(0).toUpperCase() + category.name.slice(1)}
+                      </option>
+                    ))}
+                  </select>
+                  {canManageCategories && (
+                    <button
+                      type="button"
+                      onClick={() => setShowAddCategory(true)}
+                      className="px-3 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 text-sm"
+                      title="Gestisci categorie"
+                    >
+                      <PlusIcon />
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
             

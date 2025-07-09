@@ -255,6 +255,20 @@ class ReportRequest(BaseModel):
     operator: Optional[str] = None
     status: Optional[str] = None
 
+class DatabaseConfig(BaseModel):
+    mongo_url: str
+    database_name: str = "emergency_management"
+    connection_timeout: int = 5000
+    server_selection_timeout: int = 5000
+
+class DatabaseConfigUpdate(BaseModel):
+    mongo_url: str
+    database_name: Optional[str] = "emergency_management"
+    connection_timeout: Optional[int] = 5000
+    server_selection_timeout: Optional[int] = 5000
+    test_connection: bool = True
+    create_if_not_exists: bool = True
+
 # Helper functions
 def hash_password(password: str) -> str:
     return hashlib.sha256(password.encode()).hexdigest()
